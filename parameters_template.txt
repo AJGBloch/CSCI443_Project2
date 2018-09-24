@@ -1,0 +1,5 @@
+number of items
+number of knapsacks
+capacity of each knapsack (maximum weight of an object)
+maximum value of any object
+seed for randomizer

@@ -1,0 +1,21 @@
+12 items
+2 knapsack(s)
+1000 capacity
+1000 max value
+24 seed
+list of items (index/weight/value):
+0/117/538
+1/995/901
+2/30/735
+3/529/568
+4/513/131
+5/304/159
+6/188/178
+7/862/52
+8/985/739
+9/167/217
+10/37/218
+11/564/418
+Solution string: 011000001121.
+Fitness: 3177
+Run time: 6 seconds
