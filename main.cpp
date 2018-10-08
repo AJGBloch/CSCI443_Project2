@@ -6,129 +6,112 @@
 #include <time.h>
 #include <ctime>
 #include <math.h>
+#include <fstream>
 using namespace std;
 
-struct item
+#define GRAPH_VERTICES 10
+#define MAX_WEIGHT 20
+
+
+// each vertex tracks which vertices it's connected to, the weight of each corresponding edge, and the number of connected vertices
+struct vertex
 {
-	int weight;
-	int value;
+	int connected_vertices[GRAPH_VERTICES];
+	int connected_vertices_weights[GRAPH_VERTICES];
+	int connected_vertices_count;
 };
 
 int main()
 {
-	int n, k, c, v, seed, temp_weight, temp_value, counter_1, counter_2, exit_value;
-	bool valid;
-	float best_fitness = 0;
-	float percent;
-	time_t begin, end;
-	struct tm begin_tm, end_tm;
-	cout << "Please enter the number of items to store:";
-	cin >> n;
-	cout << "Please enter the number of knapsacks to store the items in:";
-	cin >> k;
-	cout << "Please enter the capacity of each knapsack:";
-	cin >> c;
-	cout << "Please enter the maximum possible value of an item:";
-	cin >> v;
-	cout << "Please enter a seed for the randomizer:";
-	cin >> seed;
-	vector<int> sequence(n);
-	vector<int> solution(n);
-	for (int i = 0; i < n; i++) // initialize sequence to be all 0's
-	{
-		sequence[i] = 0;
-	}
-	vector<item> items(n);
-	srand(seed);
-	//generate random weight and value for each item (ranging from 1 to c and 1 to v respectively)
-	for (int i = 0; i < n; i++)
-	{
-		items[i].weight = rand()%c+1;
-		items[i].value = rand()%v+1;
-		cout << "item " << i << ": weight(" << items[i].weight << ") value(" << items[i].value << ")\n";
-	}
-	// get start time
+	int connections, connected_vertex, weight, exit_value;
+	bool flag;
+	vertex vertices[GRAPH_VERTICES];
+	time_t begin;
+	struct tm begin_tm;
+	ofstream out_file;
+	out_file.open("results.txt");
 	time(&begin);
 	localtime_s(&begin_tm, &begin);
+	srand(begin_tm.tm_yday * 90000000 + begin_tm.tm_hour * 60 * 60 + begin_tm.tm_min * 60 + begin_tm.tm_sec);
 
-	for (int i = 0; i < pow(k+1, n); i++)
+	// initialize the count of connected vertices for each vertex
+	for (int i = 0; i < GRAPH_VERTICES; i++)
 	{
-		percent = i*100/ pow(k+1, n);
-		printf("%3.5f%%\n", percent);
-		//cout << percent << "%\n";
-		for (int k = n-1; k >= 0; k--)
-		{
-			cout << sequence[k];
-		}
-		cout << "      i is " << i <<  endl;
-		counter_1 = 1;
-		valid = true;
-		temp_value = 0;
-		while (counter_1 <= k && valid) // check validity of current solution for each knapsack
-		{
-			counter_2 = 0;
-			temp_weight = 0;
-			while (counter_2 < n && valid) // check each element of the sequence
-			{
-				if(sequence[counter_2] == counter_1) // if the current element of the sequence corresponds to the knapsack we are checking....
-				{
-					temp_weight += items[counter_2].weight;
-					temp_value += items[counter_2].value;
-					//cout << "weight is " << temp_weight << endl;
-				}
-				if(temp_weight > c) // check if weight has been exceeded for that knapsack
-				{
-					valid = false;
-				}
-				counter_2++;
-			}
-			counter_1++;
-		}
+		vertices[i].connected_vertices_count = 0;
+	}
 
-		if (valid) // check fitness of current solution
+	for (int i = 0; i < GRAPH_VERTICES; i++) // for each vertex
+	{
+		connections = rand()%(GRAPH_VERTICES-1)+1; // determine number of connected vertices
+		if (vertices[i].connected_vertices_count < connections) // if it doesn't already have enough connected vertices
 		{
-			if (temp_weight > 0 && temp_value > 0)
+			for (int j = vertices[i].connected_vertices_count; j < connections; j++) // for each connected vertex
 			{
-				if (temp_value > best_fitness)
+				flag = false;
+				while (flag == false)
 				{
-					best_fitness = temp_value;
-					//cout << "current best fitness: " << best_fitness << endl;
-					for (int j = 0; j < n; j++)
+					flag = true; // assume a valid connected vertex is found
+					//determine the vertex number
+					connected_vertex = rand() % GRAPH_VERTICES;
+					if (connected_vertex == i) // if the vertex is itself
 					{
-						solution[j] = sequence[j];
+						flag = false;
+					}
+					else // check the list of vertices it is already connected to
+					{
+						for (int k = 0; k < j; k++)
+						{
+							if (connected_vertex == vertices[i].connected_vertices[k]) // if the vertex is already listed for this vertex
+								flag = false;
+						}
 					}
 				}
-			}
-		}
-		if (i < pow(k+1, n) - 1) // for all but the last time through the loop (avoid invalid reference of array element)
-		{
-			sequence[0] += 1;; // add 1 to the current sequence
-			for (int j = 0; j < n; j++)
-			{
-				if (sequence[j] == k + 1) // if the current element is maxed out, increment the following element and reset current element
+				// assign the value of the connected vertex
+				vertices[i].connected_vertices[j] = connected_vertex;
+				//determine the weight of the connecting edge
+				weight = rand() % MAX_WEIGHT + 1;
+				/*//check the connected vertex to see if it already lists that it connects to the current vertex
+				flag = false; // assume the connected edge is not already listed as being connected
+				for (int l = 0; l < vertices[connected_vertex].connected_vertices_count; l++)
 				{
-					sequence[j] = 0;
-					++sequence[j + 1];
-				}
+					if (vertices[connected_vertex].connected_vertices[l] == i)
+					{
+						flag = true;
+						weight = vertices[connected_vertex].connected_vertices_weights[l];
+					}
+				}*/
+				//assign weight to edge
+				vertices[i].connected_vertices_weights[j] = weight;
+				//increment the connected_vertices_count 
+				vertices[i].connected_vertices_count++;
+				vertices[connected_vertex].connected_vertices[vertices[connected_vertex].connected_vertices_count] = i;
+				vertices[connected_vertex].connected_vertices_weights[vertices[connected_vertex].connected_vertices_count] = weight;
+				vertices[connected_vertex].connected_vertices_count++;
+				//the following is for troubleshooting to check the status of the vertices each time through the for loop
+				/*out_file << "__________________________\n";
+				for (int m = 0; m < GRAPH_VERTICES; m++)
+				{
+					out_file << "vertex: " << m << endl;
+					for (int n = 0; n < vertices[m].connected_vertices_count; n++)
+					{
+						out_file << "    " << vertices[m].connected_vertices[n] << ":" << vertices[m].connected_vertices_weights[n] << endl;
+					}
+				}*/
 			}
 		}
 	}
-	for (int i = 0; i < n; i++)
+
+	for (int m = 0; m < GRAPH_VERTICES; m++)
 	{
-		cout << "item " << i << ": weight(" << items[i].weight << ") value(" << items[i].value << ")\n";
+		out_file << "vertex: " << m << endl;
+		for (int n = 0; n < vertices[m].connected_vertices_count; n++)
+		{
+			out_file << "    " << vertices[m].connected_vertices[n] << ":" << vertices[m].connected_vertices_weights[n] << endl;
+		}
 	}
-	cout << "Solution string: ";
-	for (int i = n-1; i >= 0; i--)
-	{
-		cout << solution[i];
-	}
-	cout << ". Fitness: " << best_fitness << endl;
-	cout << n << " items sorted into " << k << " knapsacks\n";
-	//get end time*/
-	time(&end);
-	localtime_s(&end_tm, &end);
-	// report length of run time
-	cout << "Run time: " << ((end_tm.tm_hour - begin_tm.tm_hour) * 60 + end_tm.tm_min - begin_tm.tm_min)*60 + end_tm.tm_sec - begin_tm.tm_sec << " seconds\n";
+	out_file.close();
+	//the following lines are needed to keep the terminal open until you want the program to end when running from visual studio
+	cout << "exiting...";
 	cin >> exit_value;
 	return 0;
 }
