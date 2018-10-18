@@ -5,7 +5,7 @@
 #include <cassert>
 using namespace std;
 
-#define GRAPH_VERTICES 30
+#define GRAPH_VERTICES 100
 #define MAX_WEIGHT 40
 #define MAX_DEGREE 5
 
