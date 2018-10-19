@@ -19,6 +19,7 @@ public:
 	int generations;
 	int staleness;
 	int bestFitness;
+	int mutations = 1;
 	Graph * best_tree;
 	Graph * base;
 
@@ -39,7 +40,7 @@ mutationGA::mutationGA(Graph *original)
 	best_tree = new Graph(false);
 
 	// reset population
-	populationSize = GRAPH_VERTICES;
+	populationSize = 3 * GRAPH_VERTICES;
 	population = new chromosome*[populationSize];
 
 	for (int i = 0; i < GRAPH_VERTICES; i++)
@@ -255,11 +256,17 @@ void mutationGA::runGeneration()
 	{
 		int one = rand() % populationSize;
 		int two = rand() % populationSize;
+		chromosome * winner;
 
 		if (population[one]->score <= population[two]->score)
-			new_generation[i] = edge_mutate(population[one]);
+			winner = edge_mutate(population[one]);
 		else
-			new_generation[i] = edge_mutate(population[two]);
+			winner = edge_mutate(population[two]);
+
+		for (int j = 1; j < mutations; j++)
+			winner = edge_mutate(winner);
+
+		new_generation[i] = winner;
 	}
 
 	// cout << bestIndex << population[populationSize - 1]->tree->vertices[0]->id << endl;
