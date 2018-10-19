@@ -18,7 +18,11 @@ int main()
 	//int exit_value;
 
 	// This is all you need to seed based on time
-	srand(time(NULL));
+	// Will now output seed to screen and file for troubleshooting
+	nt seed = time(NULL);
+	cout << "Seed: " << seed << endl;
+	out_file << "Seed: " << seed << endl;
+	srand(seed);
 
 	// makes a new base graph
 	Graph * base = new Graph(true);
@@ -48,6 +52,7 @@ int main()
 
 	cout << "begin\n";
 
+	/
 	/*
 	// get start time
 	time(&m_begin);
@@ -68,11 +73,14 @@ int main()
 		delete GA;
 		GA = new mutationGA(base);
 	}
+	
+	out_file << "GA Best Overall: " << m_overallBestFitness << " | Average Best: " << m_totalBestFitness / runs << " | Total Generations: " <<m_totalGenerations << " | Runs: " << runs << endl;
 
 	//get end time
 	time(&m_end);
 	localtime_s(&m_end_tm, &m_end);
 	*/
+	
 
 	// get start time
 	time(&g_begin);
