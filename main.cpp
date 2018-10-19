@@ -52,34 +52,70 @@ int main()
 
 	cout << "begin\n";
 
-	/
-	/*
-	// get start time
-	time(&m_begin);
-	localtime_s(&m_begin_tm, &m_begin);
+	// Stats for GA
+	int totalGenerations = 0;
+	int totalBestFitness = 0;
+	int overallBestFitness = tripleGA->bestFitness;
+	Graph * best_tree = new Graph(false);
+
 	// run the GA run amount of times
 	for (int i = 0; i < runs; i++)
 	{
-		while (GA->staleness < 10)
-			GA->runGeneration();
-		m_totalGenerations += GA->generations;
-		m_totalBestFitness += GA->bestFitness;
-		if (GA->bestFitness < m_overallBestFitness)
+		while (tripleGA->staleness < 10)
+			tripleGA->runGeneration();
+		totalGenerations += tripleGA->generations;
+		totalBestFitness += tripleGA->bestFitness;
+		if (tripleGA->bestFitness < overallBestFitness)
 		{
-			m_overallBestFitness = GA->bestFitness;
-			m_overall_best_tree->copy(GA->best_tree);
+			overallBestFitness = tripleGA->bestFitness;
+			for (int i = 0; i < GRAPH_VERTICES; i++)
+				best_tree->vertices[i] = tripleGA->best_tree->vertices[i];
 		}
 
-		delete GA;
-		GA = new mutationGA(base);
-	}
-	
-	out_file << "GA Best Overall: " << m_overallBestFitness << " | Average Best: " << m_totalBestFitness / runs << " | Total Generations: " <<m_totalGenerations << " | Runs: " << runs << endl;
+		out_file << "Triple GA Run: " << i << " | Best Fitness: " << tripleGA->bestFitness << " | Generations: " << tripleGA->generations << endl;
+		cout << "Triple GA Run: " << i << " | Best Fitness: " << tripleGA->bestFitness << " | Generations: " << tripleGA->generations << endl;
 
-	//get end time
-	time(&m_end);
-	localtime_s(&m_end_tm, &m_end);
-	*/
+		delete tripleGA;
+		tripleGA = new mutationGA(base);
+	}
+	cout << "Finished Triple GA" << endl;
+	out_file << "Triple GA Best Overall: " << overallBestFitness << " | Average Best: " << totalBestFitness / runs << " | Total Generations: " << totalGenerations << " | Runs: " << runs << endl << endl;
+	out_file << "Triple GA Best Tree" << endl;
+	best_tree->print(out_file);
+
+	out_file << endl;
+
+	// Stats for GA
+	totalGenerations = 0;
+	totalBestFitness = 0;
+	overallBestFitness = singleGA->bestFitness;
+
+	// run the GA run amount of times
+	for (int i = 0; i < runs; i++)
+	{
+		while (singleGA->staleness < 10)
+			singleGA->runGeneration();
+		totalGenerations += singleGA->generations;
+		totalBestFitness += singleGA->bestFitness;
+		if (singleGA->bestFitness < overallBestFitness)
+		{
+			overallBestFitness = singleGA->bestFitness;
+			for (int i = 0; i < GRAPH_VERTICES; i++)
+				best_tree->vertices[i] = singleGA->best_tree->vertices[i];
+		}
+
+		out_file << "Single GA Run: " << i << " | Best Fitness: " << singleGA->bestFitness << " | Generations: " << singleGA->generations << endl;
+		cout << "Single GA Run: " << i << " | Best Fitness: " << singleGA->bestFitness << " | Generations: " << singleGA->generations << endl;
+
+		delete singleGA;
+		singleGA = new mutationGA(base);
+	}
+	cout << "Finished Single GA" << endl;
+	out_file << "Single GA Best Overall: " << overallBestFitness << " | Average Best: " << totalBestFitness / runs << " | Total Generations: " << totalGenerations << " | Runs: " << runs << endl;
+	out_file << "Single GA Best Tree" << endl;
+	best_tree->print(out_file);
+
+	out_file << endl;
 	
 
 	// get start time
