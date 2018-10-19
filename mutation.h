@@ -55,7 +55,6 @@ mutationGA::mutationGA(Graph *original)
 		population[i] = new chromosome;
 		population[i]->tree = new Graph(false); // load a blank graph
 		randomizeTree(population[i]->tree); // make a random tree
-											// edge_mutate(population[i]); // mutate once, !remove this once finished
 		population[i]->score = population[i]->tree->fitness(); // score and store the tree
 	}
 
@@ -77,8 +76,9 @@ void mutationGA::randomizeTree(Graph * tree)
 		vertex * in, *out;
 		bool good = false;
 		int potential;
+		int potential_vertices[GRAPH_VERTICES];
 
-		// cfind a vertex in the graph
+		// find a vertex in the graph
 		while (!good)
 		{
 			good = true;
@@ -97,8 +97,8 @@ void mutationGA::randomizeTree(Graph * tree)
 			// number of adjacent vertices that aren' in the graph already
 			potential = 0;
 			for (int i = 0; i < base->vertices[in->id]->connected_vertices_count; i++)
-				if (!vertex_in_tree[base->vertices[in->id]->connected_vertices[i]->id])
-					potential++;
+				if (!vertex_in_tree[base->vertices[in->id]->connected_vertices[i]->id] && tree->vertices[in->id]->connected_vertices_count < MAX_DEGREE)
+					potential_vertices[potential++] = base->vertices[in->id]->connected_vertices[i]->id;
 
 			// If no options are available, pick a different vertex
 			if (potential == 0)
@@ -106,23 +106,7 @@ void mutationGA::randomizeTree(Graph * tree)
 		}
 		// cout << "IN vertex " << in->id << " in tree with potential " << potential << endl;
 
-		good = false;
-		while (!good)
-		{
-			good = true;
-
-			// pick a new vertex
-			// gets a random vertex that in is adjacent to
-			out = tree->vertices[base->vertices[in->id]->connected_vertices[rand() % base->vertices[in->id]->connected_vertices_count]->id];
-
-			// if the vertex is already in the tree, its no good
-			if (vertex_in_tree[out->id])
-				good = false;
-
-			// if the vertex is at max capacity, its no good
-			if (tree->vertices[out->id]->connected_vertices_count == MAX_DEGREE)
-				good = false;
-		}
+		out = tree->vertices[potential_vertices[rand() % potential]];
 
 		// calculated = base->vertices[out->id]->connected_vertices_count - tree->vertices[out->id]->connected_vertices_count;
 
@@ -180,6 +164,7 @@ chromosome * mutationGA::edge_mutate(chromosome * parent)
 	vertex * in, *out;
 	bool good = false;
 	int potential;
+	int potential_vertices[GRAPH_VERTICES];
 
 	// find a vertex in the graph
 	while (!good)
@@ -200,30 +185,18 @@ chromosome * mutationGA::edge_mutate(chromosome * parent)
 		// number of adjacent vertices that aren't in the graph already
 		potential = 0;
 		for (int i = 0; i < base->vertices[in->id]->connected_vertices_count; i++)
-			if (!in_tree[base->vertices[in->id]->connected_vertices[i]->id])
-				potential++;
+			if (!in_tree[base->vertices[in->id]->connected_vertices[i]->id] && mutation->tree->vertices[in->id]->connected_vertices_count < MAX_DEGREE)
+				potential_vertices[potential++] = base->vertices[in->id]->connected_vertices[i]->id;
 
 		// If no options are available, pick a different vertex
 		if (potential == 0)
 			good = false;
 	}
+
 	// cout << "IN vertex " << in->id << " in tree with potential " << potential << endl;
 
-	good = false;
-	while (!good)
-	{
-		good = true;
-		// gets a random vertex that in is adjacent to
-		out = mutation->tree->vertices[base->vertices[in->id]->connected_vertices[rand() % base->vertices[in->id]->connected_vertices_count]->id];
-
-		// if the vertex is already in the tree, its no good
-		if (in_tree[out->id])
-			good = false;
-
-		// if the vertex is at max capacity, its no good
-		if (mutation->tree->vertices[out->id]->connected_vertices_count == MAX_DEGREE)
-			good = false;
-	}
+	// pick a random connectable vertex
+	out = mutation->tree->vertices[potential_vertices[rand() % potential]];
 
 	// calculated = base->vertices[out->id]->connected_vertices_count - tree->vertices[out->id]->connected_vertices_count;
 
@@ -294,14 +267,12 @@ void mutationGA::runGeneration()
 	for (int i = 0; i < GRAPH_VERTICES; i++)
 		population[populationSize - 1]->tree->vertices[i] = population[bestIndex]->tree->vertices[i];
 
-	// cout << "s" << endl;
 	for (int i = 0; i < populationSize - 1; i++)
 	{
 		// delete old tree
 		delete population[i]->tree;
 		population[i]->tree = new Graph(false);
 
-		// cout << "s" << endl;
 		// copy over new tree
 		for (int j = 0; j < GRAPH_VERTICES; j++)
 			population[i]->tree->vertices[j] = new_generation[i]->tree->vertices[j];
@@ -309,5 +280,5 @@ void mutationGA::runGeneration()
 		population[i]->score = population[i]->tree->fitness();
 	}
 
-	delete new_generation;
+	delete[] new_generation;
 }
