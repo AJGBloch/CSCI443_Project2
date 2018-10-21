@@ -8,6 +8,7 @@ class Greedy
 public:
 
 	Greedy(Graph *original); // constructor
+	~Greedy();
 
 	int generations;
 	int staleness;
@@ -25,6 +26,12 @@ Greedy::Greedy(Graph *original)
 	base = new Graph(false);
 	base->copy(original);
 	best_tree = new Graph(false);
+}
+
+Greedy::~Greedy()
+{
+	delete base;
+	delete best_tree;
 }
 
 void Greedy::run_greedy(void)
