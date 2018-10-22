@@ -175,7 +175,10 @@ void mutationGA::edge_mutate(Graph * parent)
 	parent->disconnect(change, disconnect);
 
 	// the graph is disconnected into 2 partitions here
-	assert(!parent->isGraphConnect());
+	if(parent->isGraphConnected())
+		return;
+	
+	assert(!parent->isGraphConnected());
 
 	bool in_tree[GRAPH_VERTICES];
 	for (int i = 0; i < GRAPH_VERTICES; i++)
