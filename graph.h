@@ -87,8 +87,8 @@ public:
 	void disconnect(vertex * a, vertex * b); // disconnect vertex a from vertex b
 	int fitness(); // score the tree
 	void print(ostream &out_s); // output the tree vertices & edges
-	void copy(const Graph g); // copy g into this graph
-	void copy(const Graph *g); // copy g into this graph
+	void copy(Graph *g); // copy g into this graph
+	void clear();
 };
 
 Graph::Graph(bool randomize)
@@ -296,46 +296,37 @@ void Graph::print(ostream &out_s)
 	out_s << "Fitness: " << this->fitness() << endl;
 }
 
-void Graph::copy(const Graph g)
+void Graph::copy(Graph * g)
 {
-	int temp;
-	for (int i = 0; i < GRAPH_VERTICES; i++)
-	{
-		vertices[i].id = g.vertices[i].id;
-		vertices[i].connected_vertices_count = g.vertices[i].connected_vertices_count;
-		for (int j = 0; j < GRAPH_VERTICES; j++)
-		{
-			vertices[i].connected_vertices_weights[j] = g.vertices[i].connected_vertices_weights[j];
-		}
-	}
-	for (int i = 0; i < GRAPH_VERTICES; i++)
-	{
-		for (int j = 0; j < g.vertices[i].connected_vertices_count; j++)
-		{
-			temp = g.vertices[i].connected_vertices[j]->id;
-			vertices[i].connected_vertices[j] = &vertices[temp];
-		}
-	}
-}
+	// make sure the graph we are copying is a tree
+	// assert(g->isGraphConnected());
+	clear(); // clear this 
 
-void Graph::copy(const Graph * g)
-{
-	int temp;
+	bool done[GRAPH_VERTICES], done2[GRAPH_VERTICES];
 	for (int i = 0; i < GRAPH_VERTICES; i++)
-	{
-		vertices[i].id = g->vertices[i].id;
-		vertices[i].connected_vertices_count = g->vertices[i].connected_vertices_count;
-		for (int j = 0; j < GRAPH_VERTICES; j++)
-		{
-			vertices[i].connected_vertices_weights[j] = g->vertices[i].connected_vertices_weights[j];
-		}
-	}
+		done[i] = done2[i] = false;
+	done[0] = true;
+
 	for (int i = 0; i < GRAPH_VERTICES; i++)
 	{
 		for (int j = 0; j < g->vertices[i].connected_vertices_count; j++)
 		{
-			temp = g->vertices[i].connected_vertices[j]->id;
-			vertices[i].connected_vertices[j] = &vertices[temp];
+			connect(&vertices[i], &vertices[g->vertices[i].connected_vertices[j]->id], g->vertices[i].connected_vertices_weights[j]);
+		}
+	}
+
+	// assert(isGraphConnected());
+	return;
+}
+
+void Graph::clear()
+{
+	for (int i = 0; i < GRAPH_VERTICES; i++)
+	{
+		while (vertices[i].connected_vertices_count > 0)
+		{
+			vertices[i].connected_vertices[--vertices[i].connected_vertices_count] = NULL;
+			vertices[i].connected_vertices_weights[vertices[i].connected_vertices_count] = 0;
 		}
 	}
 }
