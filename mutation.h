@@ -59,7 +59,7 @@ mutationGA::mutationGA(Graph original)
 
 	// copy the graph in
 	base = new Graph(false);
-	base->copy(original);
+	base->copy(&original);
 	assert(base->isGraphConnected());
 
 	// for each chromosome
@@ -152,12 +152,14 @@ void mutationGA::randomizeTree(Graph * tree)
 	// make sure the tree is connected
 	if (DEBUG) cout << "Finished making tree." << endl;
 	assert(tree->isGraphConnected());
+	assert(tree->isMinimalTree());
 }
 
 void mutationGA::edge_mutate(Graph * parent)
 {
 	// make sure the original graph is connected
 	assert(parent->isGraphConnected());
+	assert(parent->isMinimalTree());
 
 	// pick an edge to disconnect
 	vertex * change = &parent->vertices[rand() % GRAPH_VERTICES];
@@ -175,8 +177,11 @@ void mutationGA::edge_mutate(Graph * parent)
 	parent->disconnect(change, disconnect);
 
 	// the graph is disconnected into 2 partitions here
-	if(parent->isGraphConnected())
+	if (parent->isGraphConnected()) // if this is true, then we removed an uneeded edge
+	{
+		edge_mutate(parent);
 		return;
+	}
 	
 	assert(!parent->isGraphConnected());
 
@@ -258,6 +263,7 @@ void mutationGA::edge_mutate(Graph * parent)
 
 	// final check that the graph is connected
 	assert(parent->isGraphConnected());
+	assert(parent->isMinimalTree());
 }
 
 void mutationGA::runGeneration()
@@ -329,7 +335,7 @@ void mutationGA::runGeneration()
 		population[i]->tree = new Graph(false);
 
 		// copy over new tree & score
-		population[i]->tree->copy(&new_generation[i]->tree);
+		population[i]->tree->copy(new_generation[i]->tree);
 		population[i]->score = population[i]->tree->fitness();
 
 		// recreate the place holder tree
