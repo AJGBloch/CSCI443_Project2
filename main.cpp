@@ -1,11 +1,3 @@
-// MST.cpp : Defines the entry point for the console application.
-//
-
-#include "stdafx.h"
-#include <iostream>
-#include <string>
-#include <vector>
-#include <stdlib.h>
 #include <fstream>
 #include "graph.h"
 #include "mutation.h"
@@ -13,11 +5,13 @@
 using namespace std;
 
 #define runs 30
+#define max_mutations 5
 
 int main()
 {
-	ofstream out_file;
-	out_file.open("results.txt");
+	ofstream out_file, trees;
+	out_file.open("results.csv");
+	trees.open("trees.txt");
 	int exit_value;
 	int start, end;
 
@@ -30,22 +24,51 @@ int main()
 
 	// makes a new base graph
 	Graph * original = new Graph(true);
+	Graph * best_tree = new Graph(false);
 
-	cout << "Made Graph" << endl;
+	for (int i = 1; i < max_mutations + 1; i++)
+	{
+		// instance of the mutationGA
+		mutationGA * GA = new mutationGA(original);
+		GA->mutations = i;
 
-	// instance of the mutationGA
-	mutationGA * tripleGA = new mutationGA(original);
-	tripleGA->mutations = 3;
+		// Stats for GA
+		int totalGenerations = 0;
+		int totalBestFitness = 0;
+		int overallBestFitness = GA->bestFitness;
 
-	cout << "Made GA" << endl;
+		out_file << i << " Mutation GA Run, Best Fitness, Generations, Time" << endl;
 
-	// Stats for mutation GA
-	int m_totalGenerations = 0;
-	int m_totalBestFitness = 0;
-	int m_overallBestFitness = tripleGA->bestFitness;
-	Graph * m_overall_best_tree = new Graph(false);
-	//time_t m_begin, m_end;
-	//struct tm m_begin_tm, m_end_tm;
+		// run the GA run amount of times
+		for (int j = 0; j < runs; j++)
+		{
+			start = time(NULL);
+			while (GA->staleness < 10)
+				GA->runGeneration();
+			end = time(NULL);
+			totalGenerations += GA->generations;
+			totalBestFitness += GA->bestFitness;
+			if (GA->bestFitness < overallBestFitness)
+			{
+				overallBestFitness = GA->bestFitness;
+				best_tree->copy(GA->population[0]->tree);
+			}
+
+			out_file << j << ", " << GA->bestFitness << ", " << GA->generations << ", " << end - start << endl;
+			cout << i << " Mutation GA Run: " << j << " | Best Fitness: " << GA->bestFitness << " | Generations: " << GA->generations << " | Time: " << end - start << endl;
+
+			delete GA;
+			GA = new mutationGA(original);
+		}
+		cout << "Finished " << i << " Mutation GA" << endl;
+
+		out_file << endl;
+		delete GA;
+
+	}
+
+	//instance of Greedy
+	Greedy * greedy = new Greedy(original);
 
 	// Stats for greedy algorithm
 	int counter;
@@ -53,93 +76,6 @@ int main()
 	int g_overallBestFitness = GRAPH_VERTICES * MAX_WEIGHT;
 	int g_trees_found = 0;
 	Graph * g_overall_best_tree = new Graph(false);
-	//time_t g_begin, g_end;
-	//struct tm g_begin_tm, g_end_tm;
-
-	cout << "begin\n";
-
-	// Stats for GA
-	int totalGenerations = 0;
-	int totalBestFitness = 0;
-	int overallBestFitness = tripleGA->bestFitness;
-	Graph * best_tree = new Graph(false);
-
-	// run the GA run amount of times
-	for (int i = 0; i < runs; i++)
-	{
-		start = time(NULL);
-		while (tripleGA->staleness < 10)
-			tripleGA->runGeneration();
-		end = time(NULL);
-		totalGenerations += tripleGA->generations;
-		totalBestFitness += tripleGA->bestFitness;
-		if (tripleGA->bestFitness < overallBestFitness)
-		{
-			overallBestFitness = tripleGA->bestFitness;
-			for (int i = 0; i < GRAPH_VERTICES; i++)
-				best_tree->vertices[i] = tripleGA->population[0]->tree->vertices[i];
-		}
-
-		out_file << "Triple GA Run: " << i << " | Best Fitness: " << tripleGA->bestFitness << " | Generations: " << tripleGA->generations << " | Time: "<< end - start << endl;
-		cout << "Triple GA Run: " << i << " | Best Fitness: " << tripleGA->bestFitness << " | Generations: " << tripleGA->generations << " | Time: " << end - start << endl;
-
-		delete tripleGA;
-		tripleGA = new mutationGA(original);
-	}
-	cout << "Finished Triple GA" << endl;
-	out_file << "Triple GA Best Overall: " << overallBestFitness << " | Average Best: " << totalBestFitness / runs << " | Total Generations: " << totalGenerations << " | Runs: " << runs << endl << endl;
-	out_file << "Triple GA Best Tree" << endl;
-	best_tree->print(out_file);
-
-	out_file << endl;
-	delete tripleGA;
-
-	// instance of the mutationGA
-	mutationGA * singleGA = new mutationGA(original);
-	singleGA->mutations = 1;
-
-	// Stats for GA
-	totalGenerations = 0;
-	totalBestFitness = 0;
-	overallBestFitness = singleGA->bestFitness;
-
-	// run the GA run amount of times
-	for (int i = 0; i < runs; i++)
-	{
-		start = time(NULL);
-		while (singleGA->staleness < 10)
-			singleGA->runGeneration();
-		end = time(NULL);
-		totalGenerations += singleGA->generations;
-		totalBestFitness += singleGA->bestFitness;
-		if (singleGA->bestFitness < overallBestFitness)
-		{
-			overallBestFitness = singleGA->bestFitness;
-			for (int i = 0; i < GRAPH_VERTICES; i++)
-				best_tree->vertices[i] = singleGA->population[0]->tree->vertices[i];
-		}
-
-		out_file << "Single GA Run: " << i << " | Best Fitness: " << singleGA->bestFitness << " | Generations: " << singleGA->generations << " | Time: " << end - start << endl;
-		cout << "Single GA Run: " << i << " | Best Fitness: " << singleGA->bestFitness << " | Generations: " << singleGA->generations << " | Time: " << end - start << endl;
-
-		delete singleGA;
-		singleGA = new mutationGA(original);
-	}
-	cout << "Finished Single GA" << endl;
-	out_file << "Single GA Best Overall: " << overallBestFitness << " | Average Best: " << totalBestFitness / runs << " | Total Generations: " << totalGenerations << " | Runs: " << runs << endl;
-	out_file << "Single GA Best Tree" << endl;
-	best_tree->print(out_file);
-
-	out_file << endl;
-
-	delete singleGA;
-
-	// get start time
-	//time(&g_begin);
-	//localtime_s(&g_begin_tm, &g_begin);
-
-	//instance of Greedy
-	Greedy * greedy = new Greedy(original);
 	start = time(NULL);
 
 	for (int i = 0; i < runs; i++)
@@ -168,24 +104,30 @@ int main()
 
 	end = time(NULL);
 
-	// out_file << "Best Overall (mutation): " << m_overallBestFitness << " | Average Best: " << m_totalBestFitness / runs << " | Total Generations: " << m_totalGenerations << " | Runs: " << runs << endl;
 	out_file << "Best Overall (greedy): " << g_overallBestFitness << " | Average Best: " << g_totalBestFitness / g_trees_found << " | Valid trees found: " << g_trees_found << " | Runs: " << runs << " | Time: " << end - start << endl;
-	//out_file << "Run time (mutation): " << ((m_end_tm.tm_hour - m_begin_tm.tm_hour) * 60 + m_end_tm.tm_min - m_begin_tm.tm_min) * 60 + m_end_tm.tm_sec - m_begin_tm.tm_sec << " seconds\n";
-	//out_file << "Run time: " << ((g_end_tm.tm_hour - g_begin_tm.tm_hour) * 60 + g_end_tm.tm_min - g_begin_tm.tm_min) * 60 + g_end_tm.tm_sec - g_begin_tm.tm_sec << " seconds\n";
+	cout << "Best Overall (greedy): " << g_overallBestFitness << " | Average Best: " << g_totalBestFitness / g_trees_found << " | Valid trees found: " << g_trees_found << " | Runs: " << runs << " | Time: " << end - start << endl;
 
-	out_file << endl << "Base graph vertices:\n";
-	original->print(out_file);
+	trees << endl << "Base graph vertices:\n";
+	original->print(trees);
+	trees << endl;
+
+	trees << endl << "Best tree vertices (greedy):\n";
+	g_overall_best_tree->print(trees);
+	trees << endl;
+
+	trees << endl << "Best tree vertices (mutation):\n";
+	best_tree->print(trees);
+	trees << endl;
+
+
+	// cleanup
 	delete original;
-	out_file << endl << "Best tree vertices (mutation):\n";
-	m_overall_best_tree->print(out_file);
-	delete m_overall_best_tree;
-
-	out_file << endl << "Best tree vertices (greedy):\n";
-	g_overall_best_tree->print(out_file);
+	delete best_tree;
 	delete g_overall_best_tree;
 	delete greedy;
 
 	out_file.close();
+	trees.close();
 
 
 	//the following lines are needed to keep the terminal open until you want the program to end when running from visual studio
