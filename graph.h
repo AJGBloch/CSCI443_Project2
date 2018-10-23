@@ -83,6 +83,7 @@ public:
 	Graph();
 
 	bool isGraphConnected(); // check if the graph is fully connected
+	bool isInConstraint() // check vertices for have > MAX_DEGREE connections
 	void connect(vertex * a, vertex * b, int weight); // connect vertex a to vertex b
 	void disconnect(vertex * a, vertex * b); // disconnect vertex a from vertex b
 	int fitness(); // score the tree
@@ -330,3 +331,13 @@ void Graph::clear()
 		}
 	}
 }
+
+bool Graph::isInConstraint()
+{
+	for (int i = 0; i < GRAPH_VERTICES; i++)
+		if (vertices[i].connected_vertices_count > MAX_DEGREE)
+			return false;
+
+	return true;
+}
+
