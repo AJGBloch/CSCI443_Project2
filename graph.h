@@ -83,7 +83,8 @@ public:
 	Graph();
 
 	bool isGraphConnected(); // check if the graph is fully connected
-	bool isInConstraint() // check vertices for have > MAX_DEGREE connections
+	bool isInConstraint(); // check vertices for have > MAX_DEGREE connections
+	bool isMinimalTree(); // check the size of the tree
 	void connect(vertex * a, vertex * b, int weight); // connect vertex a to vertex b
 	void disconnect(vertex * a, vertex * b); // disconnect vertex a from vertex b
 	int fitness(); // score the tree
@@ -240,6 +241,32 @@ bool Graph::isGraphConnected()
 
 	// otherwise all vertices are connected
 	return true;
+}
+
+bool Graph::isMinimalTree()
+{
+	// can't be a tree if not connected
+	if (!isGraphConnected())
+	{
+		cout << "Graph is not connected" << endl;
+		return false;
+	}
+
+	assert(isGraphConnected());
+
+	// count the number of connections in the graph
+	int totalConnections = 0;
+	for (int i = 0; i < GRAPH_VERTICES; i++)
+	{
+		totalConnections += vertices[i].connected_vertices_count - 1;
+	}
+	
+	// verify that it is the correct number
+	if(GRAPH_DEBUG) cout << "Connections: " << totalConnections << " | Vertices: " << GRAPH_VERTICES << endl;
+	if (totalConnections == GRAPH_VERTICES - 2)
+		return true;
+
+	return false;
 }
 
 int Graph::fitness()
