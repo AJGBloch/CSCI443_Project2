@@ -9,9 +9,10 @@ using namespace std;
 
 int main()
 {
-	ofstream out_file, trees;
+	ofstream out_file, trees, generations_file;
 	out_file.open("results.csv");
 	trees.open("trees.txt");
+	generations_file.open("generations.csv")
 	int exit_value;
 	int start, end;
 
@@ -44,7 +45,7 @@ int main()
 		{
 			start = time(NULL);
 			while (GA->staleness < 10)
-				GA->runGeneration();
+				GA->runGeneration(generations_file);
 			end = time(NULL);
 			totalGenerations += GA->generations;
 			totalBestFitness += GA->bestFitness;
@@ -128,6 +129,7 @@ int main()
 
 	out_file.close();
 	trees.close();
+	generations_file.close();
 
 
 	//the following lines are needed to keep the terminal open until you want the program to end when running from visual studio
