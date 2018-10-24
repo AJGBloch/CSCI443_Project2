@@ -21,7 +21,7 @@ struct chromosome
 class mutationGA
 {
 public:
-	void runGeneration();
+	void runGeneration(ostream &out_s);
 
 	mutationGA(Graph original); // constructor
 	~mutationGA()
@@ -113,7 +113,7 @@ void mutationGA::randomizeTree(Graph * tree)
 				good = false;
 
 			// if the vertex is full, its no good
-			if (in->connected_vertices_count >= MAX_DEGREE)
+			if (in->connected_vertices_count == MAX_DEGREE)
 				good = false;
 
 			// number of adjacent vertices that aren't in the graph already
@@ -158,6 +158,7 @@ void mutationGA::edge_mutate(Graph * parent)
 {
 	// make sure the original graph is connected and no un-needed edges
 	assert(parent->isMinimalTree());
+	assert(parent->isInConstraint());
 
 	// pick an edge to disconnect
 	vertex * change = &parent->vertices[rand() % GRAPH_VERTICES];
@@ -204,7 +205,7 @@ void mutationGA::edge_mutate(Graph * parent)
 		if (!in_tree[in->id])
 			good = false;
 
-		if (in->connected_vertices_count >= MAX_DEGREE)
+		if (in->connected_vertices_count == MAX_DEGREE)
 			good = false;
 
 		for (int j = 0; j < base->vertices[in->id].connected_vertices_count; j++)
@@ -250,7 +251,7 @@ void mutationGA::edge_mutate(Graph * parent)
 	assert(parent->isInConstraint());
 }
 
-void mutationGA::runGeneration()
+void mutationGA::runGeneration(ostream &out_s)
 {
 	// output data
 	int totalFitness = population[0]->score;
@@ -277,7 +278,7 @@ void mutationGA::runGeneration()
 		bestFitness = new_best_fitness;
 	}
 
-	if (generations % 10 == 0) cout << "Generation: " << generations << " | Total Fitness: " << totalFitness << " | Best Fitness: " << bestFitness << " | Avg: " << totalFitness / populationSize << " | Staleness: " << staleness << endl;
+	out_s << generations << ", " << totalFitness << ", " << bestFitness << ", " << totalFitness / populationSize << ", " << staleness << endl;
 	generations++;
 
 	// basic tournament selection
