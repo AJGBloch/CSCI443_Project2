@@ -2,19 +2,22 @@
 #include "graph.h"
 #include "mutation.h"
 #include "greedy.h"
+#include "crossover.h"
+#include "prufer.h"
 using namespace std;
 
 #define runs 30
-#define max_mutations 5
+#define max_mutations 1
 
 int main()
 {
 	ofstream out_file, trees, generations_file;
 	out_file.open("results.csv");
 	trees.open("trees.txt");
-	generations_file.open("generations.csv")
+	generations_file.open("generations.csv");
 	int exit_value;
 	int start, end;
+
 
 	// This is all you need to seed based on time
 	// Will now output seed to screen and file for troubleshooting
@@ -26,6 +29,11 @@ int main()
 	// makes a new base graph
 	Graph * original = new Graph(true);
 	Graph * best_tree = new Graph(false);
+
+	// display graph in output file
+	trees << endl << "Base graph vertices:\n";
+	original->print(trees);
+	trees << endl;
 
 	for (int i = 1; i < max_mutations + 1; i++)
 	{
@@ -68,6 +76,57 @@ int main()
 
 	}
 
+	//output best tree to file
+	trees << endl << "Best tree vertices (mutation):\n";
+	best_tree->print(trees);
+	trees << endl;
+
+	//instance of crossover
+	Crossover * crossover = new Crossover(original);
+	crossover->run();
+	delete crossover;
+
+	// instance of the crossover
+	Crossover * X = new Crossover(original);
+
+	// Stats for X
+	int totalGenerations = 0;
+	int totalBestFitness = 0;
+	int overallBestFitness = X->current_best_prufer->fitness;
+	Prufer * overall_best_prufer = new Prufer(original, false);
+
+	out_file << " Crossover GA Run, Best Fitness, Generations, Time" << endl;
+
+	// run the GA run amount of times
+	for (int j = 0; j < runs; j++)
+	{
+		start = time(NULL);
+		X->run();
+		end = time(NULL);
+		totalGenerations += X->generations;
+		totalBestFitness += X->current_best_prufer->fitness;
+		if (X->current_best_prufer->fitness < overallBestFitness)
+		{
+			overallBestFitness = X->current_best_prufer->fitness;
+			overall_best_prufer->copy(X->current_best_prufer);
+		}
+
+		out_file << j << ", " << X->current_best_prufer->fitness << ", " << X->generations << ", " << end - start << endl;
+		cout << " Crossover GA Run: " << j << " | Best Fitness: " << X->current_best_prufer->fitness << " | Generations: " << X->generations << " | Time: " << end - start << endl;
+
+		delete X;
+		X = new Crossover(original);
+	}
+	cout << "Finished " << " Crossover GA" << endl;
+
+	out_file << endl;
+
+	trees << endl << "Best tree prufer string (crossover):\n";
+	overall_best_prufer->print(trees);
+	trees << endl;
+	delete overall_best_prufer;
+	delete X;
+
 	//instance of Greedy
 	Greedy * greedy = new Greedy(original);
 
@@ -108,18 +167,10 @@ int main()
 	out_file << "Best Overall (greedy): " << g_overallBestFitness << " | Average Best: " << g_totalBestFitness / g_trees_found << " | Valid trees found: " << g_trees_found << " | Runs: " << runs << " | Time: " << end - start << endl;
 	cout << "Best Overall (greedy): " << g_overallBestFitness << " | Average Best: " << g_totalBestFitness / g_trees_found << " | Valid trees found: " << g_trees_found << " | Runs: " << runs << " | Time: " << end - start << endl;
 
-	trees << endl << "Base graph vertices:\n";
-	original->print(trees);
-	trees << endl;
 
 	trees << endl << "Best tree vertices (greedy):\n";
 	g_overall_best_tree->print(trees);
 	trees << endl;
-
-	trees << endl << "Best tree vertices (mutation):\n";
-	best_tree->print(trees);
-	trees << endl;
-
 
 	// cleanup
 	delete original;

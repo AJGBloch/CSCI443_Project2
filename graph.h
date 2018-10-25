@@ -3,11 +3,12 @@
 #include <ctime>
 #include <math.h>
 #include <cassert>
+#include <iostream>
 using namespace std;
 
-#define GRAPH_VERTICES 100
-#define MAX_WEIGHT 40
-#define MAX_DEGREE 3
+#define GRAPH_VERTICES 8
+#define MAX_WEIGHT 50
+#define MAX_DEGREE 5
 #define GRAPH_DEBUG false
 
 // each vertex tracks which vertices it's connected to, the weight of each corresponding edge, and the number of connected vertices
@@ -81,6 +82,7 @@ public:
 
 	Graph(bool randomize); // constructor to make a random graph by default, call graph(false) for a blank graph
 	Graph();
+	~Graph();
 
 	bool isGraphConnected(); // check if the graph is fully connected
 	bool isInConstraint(); // check vertices for have > MAX_DEGREE connections
@@ -150,6 +152,10 @@ Graph::Graph()
 	}
 }
 
+Graph::~Graph()
+{
+	//delete vertices;
+}
 void Graph::connect(vertex * a, vertex * b, int weight)
 {
 	bool a_connected = false, b_connected = false;
