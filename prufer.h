@@ -45,6 +45,7 @@ Prufer::Prufer(Graph *original, bool random)
 		}
 		fitness = MAX_WEIGHT * (GRAPH_VERTICES - 1) + 1;
 	}
+	if(DEBUG)cout << ".";
 }
 
 void Prufer::randomize()
@@ -86,38 +87,45 @@ void Prufer::get_fitness()
 	int vertex_degree_list[GRAPH_VERTICES][2];
 	int vertex_index, vertex_index2;
 	int degree;
+	bool invalid_degree = false;
 	int weight;
 	bool invalid_edge = false;
 	Graph * prufer_tree = new Graph(false);
 
 	//////
-
-	//the following translates prufer string to tree
-	for (int i = 0; i < GRAPH_VERTICES; i++) // set up vertex degree list based on prufer string
+	for (int i = 0; i < GRAPH_VERTICES; i++) // for each vertex in the graph
 	{
-		vertex_degree_list[i][0] = i;
-		vertex_degree_list[i][1] = 1;
-		for (int j = 0; j < GRAPH_VERTICES - 2; j++) // increment degree for each instance of the vertex in the prufer string
+		degree = 1;
+		for (int j = 0; j < GRAPH_VERTICES - 2; j++) // count the degree in tree
 		{
 			if (prufer_string[j] == i)
 			{
-				vertex_degree_list[i][1]++;
+				degree++;
+				if (degree > MAX_DEGREE)
+				{
+					invalid_degree = true;
+					j = GRAPH_VERTICES - 2;
+					i = GRAPH_VERTICES; // exit loops
+				}
 			}
 		}
 	}
-
-	if (DEBUG)
+	if (invalid_degree == false)
 	{
-		for (int i = 0; i < GRAPH_VERTICES; i++)
+		//the following translates prufer string to tree
+		for (int i = 0; i < GRAPH_VERTICES; i++) // set up vertex degree list based on prufer string
 		{
-			cout << vertex_degree_list[i][0] << ":" << vertex_degree_list[i][1] << endl;
+			vertex_degree_list[i][0] = i;
+			vertex_degree_list[i][1] = 1;
+			for (int j = 0; j < GRAPH_VERTICES - 2; j++) // increment degree for each instance of the vertex in the prufer string
+			{
+				if (prufer_string[j] == i)
+				{
+					vertex_degree_list[i][1]++;
+				}
+			}
 		}
-	}
 
-	// for each element in the prufer string
-	for (int i = 0; i < GRAPH_VERTICES - 2; i++)
-	{
-		if(DEBUG)cout << "****\n";
 		if (DEBUG)
 		{
 			for (int i = 0; i < GRAPH_VERTICES; i++)
@@ -125,30 +133,81 @@ void Prufer::get_fitness()
 				cout << vertex_degree_list[i][0] << ":" << vertex_degree_list[i][1] << endl;
 			}
 		}
-		/////prufer_tree->print(cout);
-		// find appropriate vertex: lowest degree first then lowest index number
-		vertex_index = GRAPH_VERTICES - 1;
-		degree = MAX_DEGREE;
-		for (int j = GRAPH_VERTICES - 1; j >= 0; j--)
+
+		// for each element in the prufer string
+		for (int i = 0; i < GRAPH_VERTICES - 2; i++)
 		{
-			if (vertex_degree_list[j][1] <= degree && vertex_degree_list[j][1] > 0)
+			if (DEBUG)cout << "****\n";
+			if (DEBUG)
 			{
-				vertex_index = j;
-				degree = vertex_degree_list[j][1];
+				for (int i = 0; i < GRAPH_VERTICES; i++)
+				{
+					cout << vertex_degree_list[i][0] << ":" << vertex_degree_list[i][1] << endl;
+				}
+			}
+			/////prufer_tree->print(cout);
+			// find appropriate vertex: lowest degree first then lowest index number
+			vertex_index = GRAPH_VERTICES - 1;
+			degree = MAX_DEGREE;
+			for (int j = GRAPH_VERTICES - 1; j >= 0; j--)
+			{
+				if (vertex_degree_list[j][1] <= degree && vertex_degree_list[j][1] > 0)
+				{
+					vertex_index = j;
+					degree = vertex_degree_list[j][1];
+				}
+			}
+			//
+			if (DEBUG) cout << "vertex1: " << vertex_index << " vertex2: " << prufer_string[i] << endl;
+			weight = -1;
+			for (int j = 0; j < base->vertices[vertex_index].connected_vertices_count; j++) // search for weight of connecting edge on base
+			{
+				if (base->vertices[vertex_index].connected_vertices[j]->id == prufer_string[i])
+				{
+					weight = base->vertices[vertex_index].connected_vertices_weights[j];
+					j = base->vertices[vertex_index].connected_vertices_count;
+				}
+			}
+			if (DEBUG)cout << "weight:" << weight << endl;
+			//assert(weight != -1);
+			if (weight == -1)
+			{
+				invalid_edge = true;
+			}
+			else
+			{
+				prufer_tree->connect(&prufer_tree->vertices[vertex_index], &prufer_tree->vertices[prufer_string[i]], weight);
+			}
+			vertex_degree_list[vertex_index][1]--;
+			vertex_degree_list[prufer_string[i]][1]--;
+		}
+		//add the last edge
+		vertex_index = -1;
+		for (int i = 0; i < GRAPH_VERTICES; i++)
+		{
+			if (vertex_degree_list[i][1] == 1)
+			{
+				if (vertex_index == -1)
+				{
+					vertex_index = i;
+				}
+				else
+				{
+					vertex_index2 = i;
+					i = GRAPH_VERTICES;
+				}
 			}
 		}
-		//
-		if(DEBUG) cout << "vertex1: " << vertex_index << " vertex2: " << prufer_string[i] << endl;
 		weight = -1;
 		for (int j = 0; j < base->vertices[vertex_index].connected_vertices_count; j++) // search for weight of connecting edge on base
 		{
-			if (base->vertices[vertex_index].connected_vertices[j]->id == prufer_string[i])
+			if (base->vertices[vertex_index].connected_vertices[j]->id == vertex_index2)
 			{
 				weight = base->vertices[vertex_index].connected_vertices_weights[j];
 				j = base->vertices[vertex_index].connected_vertices_count;
 			}
 		}
-		if(DEBUG)cout << "weight:" << weight << endl;
+		if (DEBUG)cout << "weight:" << weight << endl;
 		//assert(weight != -1);
 		if (weight == -1)
 		{
@@ -156,61 +215,27 @@ void Prufer::get_fitness()
 		}
 		else
 		{
-			prufer_tree->connect(&prufer_tree->vertices[vertex_index], &prufer_tree->vertices[prufer_string[i]], weight);
+			prufer_tree->connect(&prufer_tree->vertices[vertex_index], &prufer_tree->vertices[vertex_index2], weight);
 		}
-		vertex_degree_list[vertex_index][1]--;
-		vertex_degree_list[prufer_string[i]][1]--;
-	}
-	//add the last edge
-	vertex_index = -1;
-	for (int i = 0; i < GRAPH_VERTICES; i++)
-	{
-		if (vertex_degree_list[i][1] == 1)
+		if (invalid_edge == true)
 		{
-			if (vertex_index == -1)
-			{
-				vertex_index = i;
-			}
-			else
-			{
-				vertex_index2 = i;
-				i = GRAPH_VERTICES;
-			}
+			fitness = -1;
 		}
-	}
-	weight = -1;
-	for (int j = 0; j < base->vertices[vertex_index].connected_vertices_count; j++) // search for weight of connecting edge on base
-	{
-		if (base->vertices[vertex_index].connected_vertices[j]->id == vertex_index2)
+		else
 		{
-			weight = base->vertices[vertex_index].connected_vertices_weights[j];
-			j = base->vertices[vertex_index].connected_vertices_count;
+			fitness = prufer_tree->fitness();
 		}
-	}
-	if(DEBUG)cout << "weight:" << weight << endl;
-	//assert(weight != -1);
-	if (weight == -1)
-	{
-		invalid_edge = true;
+		if (fitness != -1)
+		{
+			if (DEBUG)print(cout);
+			if (DEBUG)prufer_tree->print(cout);
+		}
+		if (DEBUG) cout << " fitness:" << fitness << endl;
 	}
 	else
-	{
-		prufer_tree->connect(&prufer_tree->vertices[vertex_index], &prufer_tree->vertices[vertex_index2], weight);
-	}
-	if (invalid_edge == true)
 	{
 		fitness = -1;
 	}
-	else
-	{
-		fitness = prufer_tree->fitness();
-	}
-	if (fitness != -1)
-	{
-		if(DEBUG)print(cout);
-		if(DEBUG)prufer_tree->print(cout);
-	}
-	if (DEBUG) cout << " fitness:" << fitness << endl;
 	delete prufer_tree;
 }
 
@@ -225,12 +250,12 @@ void Prufer::copy(Prufer * p)
 
 void Prufer::print(ostream &out_s)
 {
-	out_s << "String: ";
+	out_s << "String:";
 	for (int i = 0; i < GRAPH_VERTICES - 2; i++)
 	{
-		out_s << prufer_string[i];
+		out_s << " " << prufer_string[i];
 	}
-	out_s << " Fitness: " << fitness << endl;
+	out_s << "\nFitness: " << fitness << endl;
 }
 
 Prufer::~Prufer()

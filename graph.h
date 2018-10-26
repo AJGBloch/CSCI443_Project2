@@ -6,7 +6,7 @@
 #include <iostream>
 using namespace std;
 
-#define GRAPH_VERTICES 8
+#define GRAPH_VERTICES 20
 #define MAX_WEIGHT 50
 #define MAX_DEGREE 5
 #define GRAPH_DEBUG false
@@ -113,27 +113,15 @@ Graph::Graph(bool randomize)
 		// make sure the graph is essentially blank
 		assert(!isGraphConnected());
 
-		for (int i = 0; i < GRAPH_VERTICES; i++)
+		for (int i = 0; i < GRAPH_VERTICES-1; i++) // cycle through, forming complete graph by connecting each vertex to all other vertices
 		{
-			int connections = rand() % (GRAPH_VERTICES - 1) + 1; // determine number of connected vertices
+			int connections = GRAPH_VERTICES-1-i; // connect to all other vertices not already connected
 			vertex * current_vertex = &vertices[i]; // for easier naming/assignment
 
 			// for all connections not made
-			for (int j = current_vertex->connected_vertices_count; j < connections; j++)
+			for (int j = GRAPH_VERTICES-connections; j < GRAPH_VERTICES; j++)
 			{
-				vertex * connected_vertex = &vertices[rand() % GRAPH_VERTICES]; // a vertex to connect to
-				bool found = false;
-				// while vertex is already connected to or is itself
-				while (!found || connected_vertex->id == current_vertex->id)
-				{
-					found = true; // assume a valid connected vertex is found
-					connected_vertex = &vertices[rand() % GRAPH_VERTICES];
-					// if it already is in the connected list
-					for (int k = 0; k < current_vertex->connected_vertices_count; k++)
-						if (connected_vertex->id == current_vertex->connected_vertices[k]->id)
-							found = false;
-				}
-
+				vertex * connected_vertex = &vertices[j]; //vertex to connect to
 				// connect the vertices together since this is a undirected graph and add weight to the edge
 				connect(current_vertex, connected_vertex, rand() % MAX_WEIGHT + 1);
 			}
