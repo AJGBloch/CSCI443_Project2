@@ -7,7 +7,7 @@
 #include "prufer.h"
 
 //#define POP_SIZE GRAPH_VERTICES*2
-#define POP_SIZE GRAPH_VERTICES//*8
+#define POP_SIZE GRAPH_VERTICES//*4
 #define MAX_STALENESS GRAPH_VERTICES
 
 #define SIMILAR_ALTERNATING 0
@@ -15,10 +15,11 @@
 #define SLICES 3 // n point crossover
 #define REPLACE_FIFTY_PERCENT 2 // SIMILAR_RANDOM with moving 50% of the current population to the next generation
 #define MUTATION 4
-#define TOTAL_CROSSOVER_TYPES 5
+#define SIMILAR_REPLACE_ONE 5
+#define TOTAL_CROSSOVER_TYPES 6
 
 #define PARENTS 2 // number of parents a new chromosome is made from
-#define SELECTION GRAPH_VERTICES/4 // number of chromosomes in the tournament selection to choose parents -> 4 to get in top 25% of population
+#define SELECTION 4 // number of chromosomes in the tournament selection to choose parents -> 4 to get in top 25% of population
 
 class Crossover
 {
@@ -56,8 +57,10 @@ void Crossover::run()
 	int staleness = 0;
 	int selection[SELECTION];
 	int parent[PARENTS];
-	int chosen_parent, chosen_selection, counter, temp_vertex;
-	bool parents_similar;
+	int chosen_parent, chosen_selection, counter, temp_vertex, copied_counter, copied_parent;
+	int not_similar[GRAPH_VERTICES - 2];
+	int not_similar_total;
+	bool parents_similar, proceed;
 
 
 	// generate 1st gen population
@@ -122,26 +125,39 @@ void Crossover::run()
 
 			for (int i = 0; i < PARENTS; i++) // choose parents
 			{
-				for (int j = 0; j < SELECTION; j++) // get SELECTION many chromosomes of parent gen
+				parents_similar = true;
+				while (parents_similar == true)
 				{
-					selection[j] = rand() % POP_SIZE;
-				}
-				chosen_selection = 0;
-				for (int j = 1; j < SELECTION; j++) // find best fitness from selections
-				{
-					if (pop[parent_gen][selection[j]]->fitness < pop[parent_gen][selection[chosen_selection]]->fitness)
+					for (int j = 0; j < SELECTION; j++) // get SELECTION many chromosomes of parent gen
 					{
-						chosen_selection = j;
+						selection[j] = rand() % POP_SIZE;
+					}
+					chosen_selection = 0;
+					for (int j = 1; j < SELECTION; j++) // find best fitness from selections
+					{
+						if (pop[parent_gen][selection[j]]->fitness < pop[parent_gen][selection[chosen_selection]]->fitness)
+						{
+							chosen_selection = j;
+						}
+					}
+					//assign parent to best random selection
+					parent[i] = selection[chosen_selection];
+					parents_similar = false;
+					for (int j = 0; j < i; j++)
+					{
+						if (parent[j] == parent[i])
+						{
+							parents_similar = true;
+						}
 					}
 				}
-				//assign parent to best random selection
-				parent[i] = selection[chosen_selection];
 			}
 
 			// now populate the new string...
 			pop[child_gen][chromosomes] = new Prufer(base, false); // create new empty prufer string
-			pop[child_gen][chromosomes]->fitness = -1;
-			while (pop[child_gen][chromosomes]->fitness == -1) // while invalid string is generated
+			//pop[child_gen][chromosomes]->fitness = -1;
+			//while (pop[child_gen][chromosomes]->fitness == -1) // while invalid string is generated
+			while(pop[child_gen][chromosomes]->valid() == false)
 			{
 				//initialize degree counter
 				for (int i = 0; i < GRAPH_VERTICES; i++)
@@ -362,15 +378,102 @@ void Crossover::run()
 						pop[child_gen][chromosomes]->prufer_string[rand() % (GRAPH_VERTICES - 2)] = temp_vertex; // change random element to random vertex
 						break;
 					}
+					case SIMILAR_REPLACE_ONE:
+					{
+						/////cout << ".";
+						not_similar_total = 0;
+						chosen_parent = rand() % PARENTS; // choose random starting parent when alternating
+						/////cout << "parents " << parent[0] << ' ' << parent[1] << endl;
+						/////pop[parent_gen][parent[0]]->print(cout);
+						/////pop[parent_gen][parent[1]]->print(cout);
+						for (int i = 0; i < GRAPH_VERTICES - 2; i++) // for each element in the prufer string copy it if it's similar between parents
+						{
+							parents_similar = true;
+							counter = 1;
+							while (parents_similar == true && counter < PARENTS)
+							{
+								if (pop[parent_gen][parent[0]]->prufer_string[i] != pop[parent_gen][parent[counter]]->prufer_string[i]) // check if parents differ at the i'th element
+								{
+									parents_similar = false;
+								}
+								counter++;
+							}
+							if (parents_similar == false)
+							{
+								not_similar[not_similar_total] = i;
+								not_similar_total++;
+							}
+						}
+						chosen_parent = rand() % PARENTS;
+						pop[child_gen][chromosomes]->copy(pop[parent_gen][parent[chosen_parent]]); // copy random parent
+						for (int i = 0; i < GRAPH_VERTICES - 2; i++)
+						{
+							degree_counter[pop[child_gen][chromosomes]->prufer_string[i]]++;
+						}
+						if (not_similar_total == 0) // mutate random edge
+						{
+							temp_vertex = rand() % GRAPH_VERTICES;
+							while (degree_counter[temp_vertex] >= MAX_DEGREE)
+							{
+								temp_vertex = rand() % GRAPH_VERTICES;
+							}
+							pop[child_gen][chromosomes]->prufer_string[rand() % (GRAPH_VERTICES - 2)] = temp_vertex; // change random element to random vertex
+						}
+						else
+						{
+							// select random element that is different among parents
+							// choose random parent and replace that respective element if it is different and if it does not violate degree constraint
+							counter = 0;
+							proceed = false;
+							while (!proceed && counter < 10)
+							{
+								copied_counter = rand() % not_similar_total; // random element index for not_similar[]
+								copied_parent = rand() % PARENTS; // parent index to copy from
+								while (copied_parent == chosen_parent)
+								{
+									copied_parent = rand() % PARENTS;
+								}
+								while (pop[child_gen][chromosomes]->prufer_string[not_similar[copied_counter]] == pop[parent_gen][parent[copied_parent]]->prufer_string[not_similar[copied_counter]]) // while the element to copy is similar in the child to the chosen parent
+								{
+									copied_counter = rand() % not_similar_total;
+									copied_parent = rand() % PARENTS; // parent index to copy from
+									while (copied_parent == chosen_parent)
+									{
+										copied_parent = rand() % PARENTS;
+									}
+								}
+								if (pop[parent_gen][parent[copied_parent]]->prufer_string[not_similar[copied_counter]] < MAX_DEGREE)
+								{
+									proceed = true;
+								}
+								counter++;
+							}
+							if (counter >= 10)
+							{
+								temp_vertex = rand() % GRAPH_VERTICES;
+								while (degree_counter[temp_vertex] >= MAX_DEGREE)
+								{
+									temp_vertex = rand() % GRAPH_VERTICES;
+								}
+								pop[child_gen][chromosomes]->prufer_string[rand() % (GRAPH_VERTICES - 2)] = temp_vertex; // change random element to random vertex
+
+							}
+							else
+							{
+								pop[child_gen][chromosomes]->prufer_string[not_similar[copied_counter]] = pop[parent_gen][parent[copied_parent]]->prufer_string[not_similar[copied_counter]];
+							}
+						}
+						break;
+					}
 					default: // randomize all
 					{
 						pop[child_gen][chromosomes]->randomize();
 						break;
 					}
 				}
-				pop[child_gen][chromosomes]->get_fitness();
+				//pop[child_gen][chromosomes]->get_fitness();
 			}
-
+			pop[child_gen][chromosomes]->get_fitness();
 			//check fitness of new chromosome against gen best
 			if (pop[child_gen][chromosomes]->fitness < gen_best_prufer->fitness)
 			{

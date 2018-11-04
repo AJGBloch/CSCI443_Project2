@@ -6,7 +6,7 @@
 #include <iostream>
 using namespace std;
 
-#define GRAPH_VERTICES 20
+#define GRAPH_VERTICES 50
 #define MAX_WEIGHT 50
 #define MAX_DEGREE 5
 #define GRAPH_DEBUG false

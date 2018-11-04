@@ -7,7 +7,7 @@
 using namespace std;
 
 #define runs 30
-#define max_mutations 0
+#define max_mutations 5
 
 int main()
 {
@@ -17,6 +17,7 @@ int main()
 	generations_file.open("generations.csv");
 	int exit_value;
 	int start, end;
+	Prufer *p;
 
 
 	// This is all you need to seed based on time
@@ -76,6 +77,18 @@ int main()
 
 	}
 
+	////////
+
+	/*for (int i = 0; i < 1; i++)
+	{
+		p = new Prufer(original, true);
+		p->print(cout);
+		delete p;
+	}*/
+
+
+	////////
+
 	//output best tree to file
 	trees << endl << "Best tree vertices (mutation):\n";
 	best_tree->print(trees);
@@ -88,6 +101,7 @@ int main()
 
 	// instance of the crossover
 	Crossover * X;
+	method = PRUFER;
 
 	// Stats for X
 	int totalGenerations;
@@ -107,7 +121,7 @@ int main()
 		overallBestFitness = X->current_best_prufer->fitness;
 		overall_best_prufer = new Prufer(original, false);
 
-		out_file << i <<  " crossover GA Run, Best Fitness, Generations, Time" << endl;
+		out_file << i <<  " p-crossover GA Run, Best Fitness, Generations, Time" << endl;
 
 		// run the GA run amount of times
 		for (int j = 0; j < runs; j++)
@@ -124,17 +138,66 @@ int main()
 			}
 
 			out_file << j << ", " << X->current_best_prufer->fitness << ", " << X->generations << ", " << end - start << endl;
-			cout << i << " Crossover GA Run: " << j << " | Best Fitness: " << X->current_best_prufer->fitness << " | Generations: " << X->generations << " | Time: " << end - start << endl;
+			cout << i << " p-Crossover GA Run: " << j << " | Best Fitness: " << X->current_best_prufer->fitness << " | Generations: " << X->generations << " | Time: " << end - start << endl;
 
 			delete X;
 			X = new Crossover(original);
 			X->set_type(i);
 		}
-		cout << "Finished " << i << " Crossover GA" << endl;
+		cout << "Finished " << i << " p-Crossover GA" << endl;
 
 		out_file << endl;
 
-		trees << endl << "Best tree prufer string (" << i << " crossover):\n";
+		trees << endl << "Best tree prufer string (" << i << " p-crossover):\n";
+		overall_best_prufer->print(trees);
+		trees << endl;
+		delete overall_best_prufer;
+		delete X;
+	}
+
+	// instance of the crossover
+	method = DANDELION;
+
+	for (int i = 0; i < TOTAL_CROSSOVER_TYPES; i++)
+	{
+		// instance of the crossover
+		X = new Crossover(original);
+		X->set_type(i);
+
+		// Stats for X
+		totalGenerations = 0;
+		totalBestFitness = 0;
+		overallBestFitness = X->current_best_prufer->fitness;
+		overall_best_prufer = new Prufer(original, false);
+
+		out_file << i << " d-crossover GA Run, Best Fitness, Generations, Time" << endl;
+
+		// run the GA run amount of times
+		for (int j = 0; j < runs; j++)
+		{
+			start = time(NULL);
+			X->run();
+			end = time(NULL);
+			totalGenerations += X->generations;
+			totalBestFitness += X->current_best_prufer->fitness;
+			if (X->current_best_prufer->fitness < overallBestFitness)
+			{
+				overallBestFitness = X->current_best_prufer->fitness;
+				overall_best_prufer->copy(X->current_best_prufer);
+			}
+
+			out_file << j << ", " << X->current_best_prufer->fitness << ", " << X->generations << ", " << end - start << endl;
+			cout << i << " d-Crossover GA Run: " << j << " | Best Fitness: " << X->current_best_prufer->fitness << " | Generations: " << X->generations << " | Time: " << end - start << endl;
+
+			delete X;
+			X = new Crossover(original);
+			X->set_type(i);
+		}
+		cout << "Finished " << i << " d-Crossover GA" << endl;
+
+		out_file << endl;
+
+		trees << endl << "Best tree prufer string (" << i << " d-crossover):\n";
 		overall_best_prufer->print(trees);
 		trees << endl;
 		delete overall_best_prufer;
