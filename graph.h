@@ -84,15 +84,23 @@ public:
 	Graph();
 	~Graph();
 
+	// Modify Graph
+	void connect(vertex * a, vertex * b, int weight); // connect vertex a to vertex b
+	void disconnect(vertex * a, vertex * b); // disconnect vertex a from vertex b
+	void copy(Graph *g); // copy g into this graph
+	void clear();
+	
+	// Output
+	void print(ostream &out_s); // output the tree vertices & edges
+
+	// Scoring
+	int fitness(); // score the tree
+	int find_weight(int vertex1, int vertex2); // get the weight between 2 vertices
+	
+	// Graph Conditions
 	bool isGraphConnected(); // check if the graph is fully connected
 	bool isInConstraint(); // check vertices for have > MAX_DEGREE connections
 	bool isMinimalTree(); // check the size of the tree
-	void connect(vertex * a, vertex * b, int weight); // connect vertex a to vertex b
-	void disconnect(vertex * a, vertex * b); // disconnect vertex a from vertex b
-	int fitness(); // score the tree
-	void print(ostream &out_s); // output the tree vertices & edges
-	void copy(Graph *g); // copy g into this graph
-	void clear();
 };
 
 Graph::Graph(bool randomize)
@@ -360,5 +368,24 @@ bool Graph::isInConstraint()
 			return false;
 
 	return true;
+}
+
+int Graph::find_weight(int vertex1, int vertex2)
+{
+	// search for the edge between both vertices
+	// Only need to check one direction because edges are added to both vertices
+	for (int i = 0; i < vertices[vertex1].connected_vertices_count; i++)
+	{
+		// Skip if connection no longer exists
+		if (vertices[vertex1].connected_vertices[i] == NULL)
+			continue;
+
+		// return the weight if found
+		if (vertices[vertex1].connected_vertices[i]->id == vertex2)
+			return vertices[vertex1].connected_vertices_weights[i];
+	}
+
+	// weight not found
+	return -1;
 }
 
