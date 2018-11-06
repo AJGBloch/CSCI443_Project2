@@ -2,10 +2,13 @@
 #include "graph.h"
 
 // set to true to output info to console
-#define DEBUG false
+#define MUTATE_DEBUG false
 
-// set population size here
-#define populationSize GRAPH_VERTICES
+// set maximum population size here
+#define MAX_popSize 4 * GRAPH_VERTICES
+
+// set maximum staleness size here
+#define max_staleness 4 * GRAPH_VERTICES
 
 // a potential solution
 struct chromosome
@@ -23,228 +26,149 @@ class mutationGA
 public:
 	void runGeneration(ostream &out_s);
 
-	mutationGA(Graph original); // constructor
-	~mutationGA()
-	{
-		// delete the base graph
-		delete base;
-		
-		// delete all chromomsome & place holders
-		for (int i = 0; i < populationSize; i++)
-		{
-			delete population[i];
-			delete new_generation[i];
-		}
-	}
+	mutationGA(Graph * original, int populationSize = MAX_popSize); // constructor
+	~mutationGA(); // destructor
 
 	int generations;
 	int staleness;
 	int bestFitness;
 	int mutations;
+	int popSize;
 	Graph * base;
 
 	void edge_mutate(Graph * parent);
-	void randomizeTree(Graph * tree);
+	void randomize_tree(Graph * tree);
+	void connect_partitions(Graph * tree);
 
-	chromosome * population[populationSize];
-	chromosome * new_generation[populationSize];
+	chromosome * population[MAX_popSize];
+	chromosome * new_generation[MAX_popSize];
 };
 
-mutationGA::mutationGA(Graph original)
+//=============== CONSTRUCTOR ===============
+// 1. set basic statistics
+// 2. copy original -> base
+// 3. initalize blank chromosomes
+mutationGA::mutationGA(Graph * original, int populationSize)
 {
-	// set statistics
+	// 1. set statistics
 	generations = 0;
 	staleness = 0;
+	popSize = populationSize;
 	mutations = 1;
 
-	// copy the graph in
+	assert(popSize <= MAX_popSize && popSize > 0);
+
+	// 2. copy the graph in
 	base = new Graph(false);
-	base->copy(&original);
+	base->copy(original);
 	assert(base->isGraphConnected());
 
-	// for each chromosome
-	for (int i = 0; i < populationSize; i++)
+	// 3. initalize chromosomes
+	for (int i = 0; i < MAX_popSize; i++)
 	{
-		// make a blank start
-		if (DEBUG) cout << "Making " << i << " of " << populationSize << endl;
-		population[i] = new chromosome;
-		population[i]->tree = new Graph(false); // load a blank graph
-		randomizeTree(population[i]->tree); // make a random tree
-		population[i]->score = population[i]->tree->fitness(); // score and store the tree
+		if (i < popSize)
+		{
+			// make a blank start & place holder
+			if (MUTATE_DEBUG) cout << "Making " << i << " of " << popSize << endl;
+
+			population[i] = new chromosome;
+			new_generation[i] = new chromosome;
+			population[i]->tree = new Graph(false); // load a blank graph
+			randomize_tree(population[i]->tree); // make a random tree
+			population[i]->score = population[i]->tree->fitness(); // score and store the tree
+			new_generation[i]->tree = new Graph(false); // make a blank graph for the place holder
+		}
+		else
+			population[i] = new_generation[i] = NULL;
 	}
 
-	for (int i = 0; i < populationSize; i++)
-	{
-		// make new_generation place holders
-		new_generation[i] = new chromosome;
-		new_generation[i]->tree = new Graph(false);
-	}
-
-	//reset bestFitness
+	// 1. reset bestFitness
 	bestFitness = population[0]->score;
 }
 
-void mutationGA::randomizeTree(Graph * tree)
+//=============== DESTRUCTOR ===============
+// 1. delete the original graph
+// 2. delete all chromosomes & place holders
+mutationGA::~mutationGA()
 {
-	bool vertex_in_tree[GRAPH_VERTICES]; // array of vertices present in the tree
-	for (int i = 0; i < GRAPH_VERTICES; i++)
-		vertex_in_tree[i] = false;
+	// 1. delete the base graph
+	delete base;
 
-	vertex_in_tree[rand() % GRAPH_VERTICES] = true; // randomize root
-
-	// while the graph is not finished
-	while (!tree->isGraphConnected())
+	// 2. delete all chromomsome & place holders if they exist
+	for (int i = 0; i < MAX_popSize; i++)
 	{
-		vertex * in, *out;
-		bool good = false;
-		int potential;
-		int potential_vertices[GRAPH_VERTICES];
-
-		// find a vertex in the graph
-		while (!good)
-		{
-			good = true;
-
-			// select a vertex
-			in = &tree->vertices[rand() % GRAPH_VERTICES];
-
-			// if the vertex is not in the tree, its no good
-			if (!vertex_in_tree[in->id])
-				good = false;
-
-			// if the vertex is full, its no good
-			if (in->connected_vertices_count == MAX_DEGREE)
-				good = false;
-
-			// number of adjacent vertices that aren't in the graph already
-			potential = 0;
-			for (int i = 0; i < base->vertices[in->id].connected_vertices_count; i++)
-				if (!vertex_in_tree[base->vertices[in->id].connected_vertices[i]->id] && tree->vertices[in->id].connected_vertices_count < MAX_DEGREE)
-					potential_vertices[potential++] = base->vertices[in->id].connected_vertices[i]->id;
-
-			// If no options are available, pick a different vertex
-			if (potential == 0)
-				good = false;
-		}
-		
-		if (DEBUG) cout << "IN vertex " << in->id << " in tree with potential " << potential << ", and " << in->connected_vertices_count << " connections." << endl;
-
-		// pick a random connection from base graph
-		out = &tree->vertices[potential_vertices[rand() % potential]];
-
-		// find the edge weight
-		int edge_weight;
-		for (int i = 0; i < base->vertices[in->id].connected_vertices_count; i++)
-			if (base->vertices[in->id].connected_vertices[i]->id == out->id)
-				edge_weight = base->vertices[in->id].connected_vertices_weights[i];
-
-		if (DEBUG) cout << "OUT vertex " << out->id << " outside tree with edge weight " << edge_weight << ", and " << out->connected_vertices_count << " connections." << endl;
-		if (DEBUG) cout << "Connecting the edge between " << in->id << " and " << out->id << " with weight: " << edge_weight << endl;
-
-		// add out vertex to tree
-		tree->connect(&tree->vertices[in->id], &tree->vertices[out->id], edge_weight);
-		vertex_in_tree[out->id] = true;
-
-		in = out = NULL; // nullify pointers
+		if (population[i] != NULL)
+			delete population[i];
+		if (new_generation[i])
+			delete new_generation[i];
 	}
-	
-	// make sure the tree is connected and a tree
-	if (DEBUG) cout << "Finished making tree." << endl;
-	assert(tree->isMinimalTree());
-	assert(tree->isInConstraint());
 }
 
-void mutationGA::edge_mutate(Graph * parent)
+void mutationGA::randomize_tree(Graph * tree)
 {
-	// make sure the original graph is connected and no un-needed edges
-	assert(parent->isMinimalTree());
-	assert(parent->isInConstraint());
-
-	// pick an edge to disconnect
-	vertex * change = &parent->vertices[rand() % GRAPH_VERTICES];
-	vertex * disconnect = change->connected_vertices[rand() % change->connected_vertices_count];
-
-	// find the weight of the edge in case we need to reconnect
-	int weight;
-	for (int i = 0; i < change->connected_vertices_count; i++)
-		if (change->connected_vertices[i]->id == disconnect->id)
-			weight = change->connected_vertices_weights[i];
-
-	if (DEBUG) cout << "Disconnecting the edge between " << change->id << " and " << disconnect->id << endl;
-
-	// 3. disconnect that edge
-	parent->disconnect(change, disconnect);
-
-	// the graph is disconnected into 2 partitions here
-	assert(!parent->isGraphConnected());
-
+	tree->clear();
+	// array of vertices present in the tree
 	bool in_tree[GRAPH_VERTICES];
 	for (int i = 0; i < GRAPH_VERTICES; i++)
 		in_tree[i] = false;
 
-	in_tree[change->id] = true;
+	// randomize starting vertex
+	in_tree[rand() % GRAPH_VERTICES] = true;
 
-	// identify all vertices in one partition
-	// true if connected to change vertex, false if connected to disconnect vertex
-	change->fillGraph(in_tree);
+	// while the graph is not finished
+	while (!tree->isGraphConnected())
+		connect_partitions(tree);
 
-	vertex *in = NULL, *out = NULL;
-	bool good = false;
-	int potential = 0;
-	int potential_vertex[GRAPH_VERTICES];
-	int potential_vertices[GRAPH_VERTICES];
-
-	// search for all potential other connections
 	for (int i = 0; i < GRAPH_VERTICES; i++)
 	{
-		bool good = true;
-
-		int connections = 0;
-		in = &parent->vertices[i];
-
-		if (!in_tree[in->id])
-			good = false;
-
-		if (in->connected_vertices_count == MAX_DEGREE)
-			good = false;
-
-		for (int j = 0; j < base->vertices[in->id].connected_vertices_count; j++)
-			if (!in_tree[base->vertices[in->id].connected_vertices[j]->id] && parent->vertices[base->vertices[in->id].connected_vertices[j]->id].connected_vertices_count < MAX_DEGREE)
-				connections++;
-
-		if (good && connections > 0)
-			potential_vertex[potential++] = in->id;
+		for (int j = 0; j < tree->vertices[i].connected_vertices_count; j++)
+		{
+			if (tree->vertices[i].connected_vertices[j] != NULL)
+				assert(tree->find_weight(tree->vertices[i].id, tree->vertices[i].connected_vertices[j]->id) == base->find_weight(tree->vertices[i].id, tree->vertices[i].connected_vertices[j]->id));
+		}
 	}
 
-	// make sure a mutation is possible, and pick a possible vertex
-	assert(potential > 0);
-	in = &parent->vertices[potential_vertex[rand() % potential]];
+	// make sure the tree is connected and a tree
+	if (MUTATE_DEBUG) cout << "Finished making tree." << endl;
+	assert(tree->isMinimalTree());
+	assert(tree->isInConstraint());
+}
 
-	// find all connected vertices that aren't in the graph
-	potential = 0;
-	for (int i = 0; i < base->vertices[in->id].connected_vertices_count; i++)
-		if (!in_tree[base->vertices[in->id].connected_vertices[i]->id] && parent->vertices[base->vertices[in->id].connected_vertices[i]->id].connected_vertices_count < MAX_DEGREE)
-			potential_vertices[potential++] = base->vertices[in->id].connected_vertices[i]->id;
+//=============== edge_mutate ===============
+// 1. pick an edge to disconnect
+// 2. disconnect that edge
+// 3. identify all vertices in each partition
+// 4. search for all potential edges that would connect the tree (will include the disconnected edge)
+// 5. pick a potential vertex
+// 6. find all connected vertices that aren't in the same partition
+// 7. pick a random connectable vertex
+// 8. find the edge weight
+// 9. connect the vertex and score the tree
+void mutationGA::edge_mutate(Graph * parent)
+{
+	// make sure the original graph is connected and minimal
+	assert(parent->isMinimalTree());
+	assert(parent->isInConstraint());
 
-	if (DEBUG) cout << "IN vertex " << in->id << " in tree with potential " << potential << ", and " << in->connected_vertices_count << " connections." << endl;
+	// 1. pick an edge to disconnect
+	vertex * in = &parent->vertices[rand() % GRAPH_VERTICES];
+	vertex * out = in->connected_vertices[rand() % in->connected_vertices_count];
 
-	// pick a random connectable vertex
-	out = &parent->vertices[potential_vertices[rand() % potential]];
+	// 2. disconnect that edge
+	if (MUTATE_DEBUG) cout << "Disconnecting the edge between " << in->id << " and " << in->id << endl;
+	parent->disconnect(in, out);
+	assert(!parent->isGraphConnected());
 
-	// find the edge weight
-	int edge_weight;
-	for (int i = 0; i < base->vertices[in->id].connected_vertices_count; i++)
-		if (base->vertices[in->id].connected_vertices[i]->id == out->id)
-			edge_weight = base->vertices[in->id].connected_vertices_weights[i];
+	connect_partitions(parent);
 
-	if (DEBUG) cout << "OUT vertex " << out->id << " outside tree with edge weight " << edge_weight << ", and " << out->connected_vertices_count << " connections." << endl;
-	if (DEBUG) cout << "Connecting the edge between " << in->id << " and " << out->id << " with weight: " << edge_weight << endl;
-
-	// add the vertex and score the tree
-	parent->connect(&parent->vertices[in->id], &parent->vertices[out->id], edge_weight);
-
-	// nullify extra pointers
-	in = out = NULL;
+	for (int i = 0; i < GRAPH_VERTICES; i++)
+	{
+		for (int j = 0; j < parent->vertices[i].connected_vertices_count; j++)
+		{
+			if (parent->vertices[i].connected_vertices[j] != NULL)
+				assert(parent->find_weight(parent->vertices[i].id, parent->vertices[i].connected_vertices[j]->id) == base->find_weight(parent->vertices[i].id, parent->vertices[i].connected_vertices[j]->id));
+		}
+	}
 
 	// final check that the graph is connected and a tree
 	assert(parent->isMinimalTree());
@@ -258,8 +182,10 @@ void mutationGA::runGeneration(ostream &out_s)
 	int new_best_fitness = population[0]->score;
 	int bestIndex = 0;
 
+	assert(popSize <= MAX_popSize && popSize > 0);
+
 	// find the best tree in the population
-	for (int i = 1; i < populationSize; i++)
+	for (int i = 1; i < popSize; i++)
 	{
 		totalFitness += population[i]->score;
 		if (population[i]->score < new_best_fitness)
@@ -278,14 +204,14 @@ void mutationGA::runGeneration(ostream &out_s)
 		bestFitness = new_best_fitness;
 	}
 
-	out_s << generations << ", " << totalFitness << ", " << bestFitness << ", " << totalFitness / populationSize << ", " << staleness << endl;
+	out_s << generations << ", " << totalFitness << ", " << bestFitness << ", " << totalFitness / popSize << ", " << staleness << endl;
 	generations++;
 
 	// basic tournament selection
-	for (int i = 1; i < populationSize; i++)
+	for (int i = 1; i < popSize; i++)
 	{
-		int one = rand() % populationSize;
-		int two = rand() % populationSize;
+		int one = rand() % popSize;
+		int two = rand() % popSize;
 
 		// copy the winner's tree
 		if (population[one]->score <= population[two]->score)
@@ -307,7 +233,7 @@ void mutationGA::runGeneration(ostream &out_s)
 	new_generation[0]->tree->copy(population[bestIndex]->tree);
 	assert(new_generation[0]->tree->isMinimalTree());
 
-	for (int i = 0; i < populationSize; i++)
+	for (int i = 0; i < popSize; i++)
 	{
 		// make sure the incoming tree is valid
 		assert(new_generation[i]->tree->isMinimalTree());
@@ -318,4 +244,76 @@ void mutationGA::runGeneration(ostream &out_s)
 
 		assert(population[i]->tree->isMinimalTree());
 	}
+}
+
+void mutationGA::connect_partitions(Graph * tree)
+{
+	// array of vertices, will seperate which vertices are in each partition of the tree
+	bool in_tree[GRAPH_VERTICES];
+	for (int i = 0; i < GRAPH_VERTICES; i++)
+		in_tree[i] = false;
+
+	in_tree[0] = true;
+	tree->vertices[0].fillGraph(in_tree);
+
+	vertex *in = NULL, *out = NULL;
+	int potential = 0;
+	int potential_vertex[GRAPH_VERTICES];
+	int potential_vertices[GRAPH_VERTICES];
+
+	// 4. search for all potential edges that would connect the tree
+	for (int i = 0; i < GRAPH_VERTICES; i++)
+	{
+		int connections = 0;
+		in = &tree->vertices[i];
+
+		// only conisder vertices in one partition
+		if (!in_tree[in->id])
+			continue;
+
+		// can't add an edge if the vertex is full
+		if (in->connected_vertices_count == MAX_DEGREE)
+			continue;
+
+		// count the number of vertices it is connected to that are in a different partition
+		for (int j = 0; j < base->vertices[in->id].connected_vertices_count; j++)
+			if (!in_tree[base->vertices[in->id].connected_vertices[j]->id] && tree->vertices[base->vertices[in->id].connected_vertices[j]->id].connected_vertices_count < MAX_DEGREE)
+				connections++;
+
+		// if all criteria met
+		if (connections > 0)
+			potential_vertex[potential++] = in->id;
+	}
+
+	// 5. pick a potential vertex
+	assert(potential > 0);
+	in = &tree->vertices[potential_vertex[rand() % potential]];
+
+	// 6. find all connected vertices that aren't in the same partition
+	potential = 0;
+	for (int i = 0; i < base->vertices[in->id].connected_vertices_count; i++)
+		if (!in_tree[base->vertices[in->id].connected_vertices[i]->id] && tree->vertices[base->vertices[in->id].connected_vertices[i]->id].connected_vertices_count < MAX_DEGREE)
+			potential_vertices[potential++] = base->vertices[in->id].connected_vertices[i]->id;
+
+	if (MUTATE_DEBUG) cout << "IN vertex " << in->id << " in tree with potential " << potential << ", and " << in->connected_vertices_count << " connections." << endl;
+
+	// 7. pick a random connectable vertex
+	out = &tree->vertices[potential_vertices[rand() % potential]];
+
+	// 8. find the edge weight
+	int edge_weight = base->find_weight(in->id, out->id);
+	/*for (int i = 0; i < base->vertices[in->id].connected_vertices_count; i++)
+		if (base->vertices[in->id].connected_vertices[i]->id == out->id)
+			edge_weight = base->vertices[in->id].connected_vertices_weights[i];*/
+
+	if (MUTATE_DEBUG) cout << "OUT vertex " << out->id << " outside tree with edge weight " << edge_weight << ", and " << out->connected_vertices_count << " connections." << endl;
+	if (MUTATE_DEBUG) cout << "Connecting the edge between " << in->id << " and " << out->id << " with weight: " << edge_weight << endl;
+
+	// 9. connect the vertex and score the tree
+	tree->connect(&tree->vertices[in->id], &tree->vertices[out->id], edge_weight);
+
+	assert(tree->find_weight(in->id, out->id) == base->find_weight(in->id, out->id));
+
+	// nullify extra pointers
+	in = out = NULL;
 }
