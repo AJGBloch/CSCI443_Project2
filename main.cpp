@@ -35,26 +35,32 @@ int main()
 	trees << endl << "Base graph vertices:\n";
 	original->print(trees);
 	trees << endl;
-
-	for (int i = 1; i < max_mutations + 1; i++)
+	
+	for (int i = 1; i < max_mutations + 1; i += 2)
 	{
-		// instance of the mutationGA
-		mutationGA * GA = new mutationGA(original);
+		// instance of the adList
+		adList * GA = new adList(original, max_popSize / 4);
+		Graph * best_tree = new Graph(false);
 		GA->mutations = i;
+		GA->op = AL_MUTATION;
 
 		// Stats for GA
 		int totalGenerations = 0;
 		int totalBestFitness = 0;
 		int overallBestFitness = GA->bestFitness;
+		int runStart = time(NULL);
 
 		out_file << i << " Mutation GA Run, Best Fitness, Generations, Time" << endl;
 
 		// run the GA run amount of times
 		for (int j = 0; j < runs; j++)
 		{
+			// GA->mutations = i;
 			start = time(NULL);
-			while (GA->staleness < 10)
-				GA->runGeneration(generations_file);
+			// generations_file << "Generation, Total Fitness, Best Fitness, Avg, Staleness" << endl;
+
+			while (GA->staleness < max_staleness / 2)
+				GA->run_generation(generations_file);
 			end = time(NULL);
 			totalGenerations += GA->generations;
 			totalBestFitness += GA->bestFitness;
@@ -66,15 +72,21 @@ int main()
 
 			out_file << j << ", " << GA->bestFitness << ", " << GA->generations << ", " << end - start << endl;
 			cout << i << " Mutation GA Run: " << j << " | Best Fitness: " << GA->bestFitness << " | Generations: " << GA->generations << " | Time: " << end - start << endl;
+			// generations_file << endl;
 
 			delete GA;
-			GA = new mutationGA(original);
+			GA = new adList(original, max_popSize / 4);
+			GA->op = AL_MUTATION;
 		}
-		cout << "Finished " << i << " Mutation GA" << endl;
-
+		cout << "Finished " << i << " Mutation GA Run | Best Fitness: " << overallBestFitness << " | Avg End Fitness: " << (float)totalBestFitness / runs << " | Avg Generations: " << (float)totalGenerations / runs << " | Time: " << time(NULL) - runStart << endl;
 		out_file << endl;
 		delete GA;
 
+		//output best tree to file
+		trees << endl << "Best tree vertices " << i << " mutation: " << endl;
+		best_tree->print(trees);
+		trees << endl;
+		delete best_tree;
 	}
 
 	////////
