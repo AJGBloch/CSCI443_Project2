@@ -6,8 +6,8 @@
 #include "prufer.h"
 using namespace std;
 
-#define runs 30
-#define max_mutations 5
+#define runs P_RUNS
+//#define max_mutations 5
 
 int main()
 {
@@ -89,23 +89,6 @@ int main()
 		delete best_tree;
 	}
 
-	////////
-
-	/*for (int i = 0; i < 1; i++)
-	{
-		p = new Prufer(original, true);
-		p->print(cout);
-		delete p;
-	}*/
-
-
-	////////
-
-	//output best tree to file
-	trees << endl << "Best tree vertices (mutation):\n";
-	best_tree->print(trees);
-	trees << endl;
-
 	/*//instance of crossover
 	Crossover * crossover = new Crossover(original);
 	crossover->run();
@@ -133,7 +116,41 @@ int main()
 		overallBestFitness = X->current_best_prufer->fitness;
 		overall_best_prufer = new Prufer(original, false);
 
-		out_file << i <<  " p-crossover GA Run, Best Fitness, Generations, Time" << endl;
+		switch (i)
+		{
+			case SIMILAR_ALTERNATING:
+			{
+				out_file << "ND SA Crossover GA Run, Best Fitness, Generations, Time" << endl;
+				break;
+			}
+			case SIMILAR_RANDOM:
+			{
+				out_file << "ND SR Crossover GA Run, Best Fitness, Generations, Time" << endl;
+				break;
+			}
+			case REPLACE_FIFTY_PERCENT:
+			{
+				out_file << "ND SRCF Crossover GA Run, Best Fitness, Generations, Time" << endl;
+				break;
+			}
+			case SLICES:
+			{
+				out_file << "ND NP Crossover GA Run, Best Fitness, Generations, Time" << endl;
+				break;
+			}
+			case MUTATION:
+			{
+				out_file << "ND PSR Mutation GA Run, Best Fitness, Generations, Time" << endl;
+				break;
+			}
+			case SIMILAR_REPLACE_ONE:
+			{
+				out_file << "ND PSP Mutation GA Run, Best Fitness, Generations, Time" << endl;
+				break;
+			}
+			default:
+				break;
+		}
 
 		// run the GA run amount of times
 		for (int j = 0; j < runs; j++)
@@ -151,7 +168,6 @@ int main()
 
 			out_file << j << ", " << X->current_best_prufer->fitness << ", " << X->generations << ", " << end - start << endl;
 			cout << i << " p-Crossover GA Run: " << j << " | Best Fitness: " << X->current_best_prufer->fitness << " | Generations: " << X->generations << " | Time: " << end - start << endl;
-
 			delete X;
 			X = new Crossover(original);
 			X->set_type(i);
@@ -160,7 +176,41 @@ int main()
 
 		out_file << endl;
 
-		trees << endl << "Best tree prufer string (" << i << " p-crossover):\n";
+		switch (i)
+		{
+			case SIMILAR_ALTERNATING:
+			{
+				trees << endl << "Best tree prufer string (ND SA Crossover):\n";
+				break;
+			}
+			case SIMILAR_RANDOM:
+			{
+				trees << endl << "Best tree prufer string (ND SR Crossover):\n";
+				break;
+			}
+			case REPLACE_FIFTY_PERCENT:
+			{
+				trees << endl << "Best tree prufer string (ND SRCF Crossover):\n";
+				break;
+			}
+			case SLICES:
+			{
+				trees << endl << "Best tree prufer string (ND NP Crossover):\n";
+				break;
+			}
+			case MUTATION:
+			{
+				trees << endl << "Best tree prufer string (ND PSR Mutation):\n";
+				break;
+			}
+			case SIMILAR_REPLACE_ONE:
+			{
+				trees << endl << "Best tree prufer string (ND PSP Mutation):\n";
+				break;
+			}
+			default:
+				break;
+		}
 		overall_best_prufer->print(trees);
 		trees << endl;
 		delete overall_best_prufer;
@@ -182,8 +232,41 @@ int main()
 		overallBestFitness = X->current_best_prufer->fitness;
 		overall_best_prufer = new Prufer(original, false);
 
-		out_file << i << " d-crossover GA Run, Best Fitness, Generations, Time" << endl;
-
+		switch (i)
+		{
+		case SIMILAR_ALTERNATING:
+		{
+			out_file << "DD SA Crossover GA Run, Best Fitness, Generations, Time" << endl;
+			break;
+		}
+		case SIMILAR_RANDOM:
+		{
+			out_file << "DD SR Crossover GA Run, Best Fitness, Generations, Time" << endl;
+			break;
+		}
+		case REPLACE_FIFTY_PERCENT:
+		{
+			out_file << "DD SRCF Crossover GA Run, Best Fitness, Generations, Time" << endl;
+			break;
+		}
+		case SLICES:
+		{
+			out_file << "DD NP Crossover GA Run, Best Fitness, Generations, Time" << endl;
+			break;
+		}
+		case MUTATION:
+		{
+			out_file << "DD PSR Mutation GA Run, Best Fitness, Generations, Time" << endl;
+			break;
+		}
+		case SIMILAR_REPLACE_ONE:
+		{
+			out_file << "DD PSP Mutation GA Run, Best Fitness, Generations, Time" << endl;
+			break;
+		}
+		default:
+			break;
+		}
 		// run the GA run amount of times
 		for (int j = 0; j < runs; j++)
 		{
@@ -209,7 +292,41 @@ int main()
 
 		out_file << endl;
 
-		trees << endl << "Best tree prufer string (" << i << " d-crossover):\n";
+		switch (i)
+		{
+		case SIMILAR_ALTERNATING:
+		{
+			trees << endl << "Best tree prufer string (DD SA Crossover):\n";
+			break;
+		}
+		case SIMILAR_RANDOM:
+		{
+			trees << endl << "Best tree prufer string (DD SR Crossover):\n";
+			break;
+		}
+		case REPLACE_FIFTY_PERCENT:
+		{
+			trees << endl << "Best tree prufer string (DD SRCF Crossover):\n";
+			break;
+		}
+		case SLICES:
+		{
+			trees << endl << "Best tree prufer string (DD NP Crossover):\n";
+			break;
+		}
+		case MUTATION:
+		{
+			trees << endl << "Best tree prufer string (DD PSR Mutation):\n";
+			break;
+		}
+		case SIMILAR_REPLACE_ONE:
+		{
+			trees << endl << "Best tree prufer string (DD PSP Mutation):\n";
+			break;
+		}
+		default:
+			break;
+		}
 		overall_best_prufer->print(trees);
 		trees << endl;
 		delete overall_best_prufer;

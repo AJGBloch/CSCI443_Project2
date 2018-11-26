@@ -7,8 +7,8 @@
 #include "prufer.h"
 
 //#define POP_SIZE GRAPH_VERTICES*2
-#define POP_SIZE GRAPH_VERTICES//*4
-#define MAX_STALENESS GRAPH_VERTICES
+#define POP_SIZE P_POP_SIZE
+#define MAX_STALENESS P_MAX_STALENESS
 
 #define SIMILAR_ALTERNATING 0
 #define SIMILAR_RANDOM 1
@@ -18,8 +18,8 @@
 #define SIMILAR_REPLACE_ONE 5
 #define TOTAL_CROSSOVER_TYPES 6
 
-#define PARENTS 2 // number of parents a new chromosome is made from
-#define SELECTION 4 // number of chromosomes in the tournament selection to choose parents -> 4 to get in top 25% of population
+#define PARENTS P_PARENTS // number of parents a new chromosome is made from
+#define SELECTION P_SELECTION // number of chromosomes in the tournament selection to choose parents -> 4 to get in top 25% of population
 
 class Crossover
 {

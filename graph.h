@@ -4,11 +4,12 @@
 #include <math.h>
 #include <cassert>
 #include <iostream>
+#include "parameters.h"
 using namespace std;
 
-#define GRAPH_VERTICES 50
-#define MAX_WEIGHT 50
-#define MAX_DEGREE 5
+#define GRAPH_VERTICES P_GRAPH_VERTICES
+#define MAX_WEIGHT P_MAX_WEIGHT
+#define MAX_DEGREE P_MAX_DEGREE
 #define GRAPH_DEBUG false
 
 // each vertex tracks which vertices it's connected to, the weight of each corresponding edge, and the number of connected vertices

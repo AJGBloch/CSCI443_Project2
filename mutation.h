@@ -5,13 +5,13 @@
 #define MUTATE_DEBUG false
 
 // set maximum population size here
-#define max_popSize 4 * GRAPH_VERTICES
+#define max_popSize P_POP_SIZE
 
 // set maximum staleness size here
-#define max_staleness 4 * GRAPH_VERTICES
+#define max_staleness P_MAX_STALENESS
 
 // set the maximum mutations here
-#define max_mutations 3
+#define max_mutations P_MAX_MUTATIONS
 
 // Different operators
 #define AL_MUTATION 0
