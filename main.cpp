@@ -50,7 +50,7 @@ int main()
 		int overallBestFitness = GA->bestFitness;
 		int runStart = time(NULL);
 
-		out_file << i << " Mutation GA Run, Best Fitness, Generations, Time" << endl;
+		out_file << i << " Tree Mutation GA Run, Best Fitness, Generations, Time" << endl;
 
 		// run the GA run amount of times
 		for (int j = 0; j < runs; j++)
@@ -71,19 +71,19 @@ int main()
 			}
 
 			out_file << j << ", " << GA->bestFitness << ", " << GA->generations << ", " << end - start << endl;
-			cout << i << " Mutation GA Run: " << j << " | Best Fitness: " << GA->bestFitness << " | Generations: " << GA->generations << " | Time: " << end - start << endl;
+			cout << i << " Tree Mutation GA Run: " << j << " | Best Fitness: " << GA->bestFitness << " | Generations: " << GA->generations << " | Time: " << end - start << endl;
 			// generations_file << endl;
 
 			delete GA;
 			GA = new adList(original, max_popSize / 4);
 			GA->op = AL_MUTATION;
 		}
-		cout << "Finished " << i << " Mutation GA Run | Best Fitness: " << overallBestFitness << " | Avg End Fitness: " << (float)totalBestFitness / runs << " | Avg Generations: " << (float)totalGenerations / runs << " | Time: " << time(NULL) - runStart << endl;
+		cout << "Finished " << i << " Tree Mutation GA Run | Best Fitness: " << overallBestFitness << " | Avg End Fitness: " << (float)totalBestFitness / runs << " | Avg Generations: " << (float)totalGenerations / runs << " | Time: " << time(NULL) - runStart << endl;
 		out_file << endl;
 		delete GA;
 
 		//output best tree to file
-		trees << endl << "Best tree vertices " << i << " mutation: " << endl;
+		trees << endl << "Best tree vertices (" << i << " Tree Mutation): " << endl;
 		best_tree->print(trees);
 		trees << endl;
 		delete best_tree;
@@ -103,7 +103,7 @@ int main()
 		int overallBestFitness = GA->bestFitness;
 		int runStart = time(NULL);
 
-		out_file << i << " Mutation GA Run, Best Fitness, Generations, Time" << endl;
+		out_file << i << " Tree Crossover GA Run, Best Fitness, Generations, Time" << endl;
 
 		// run the GA run amount of times
 		for (int j = 0; j < runs; j++)
@@ -124,19 +124,19 @@ int main()
 			}
 
 			out_file << j << ", " << GA->bestFitness << ", " << GA->generations << ", " << end - start << endl;
-			cout << i << " Mutation GA Run: " << j << " | Best Fitness: " << GA->bestFitness << " | Generations: " << GA->generations << " | Time: " << end - start << endl;
+			cout << i << " Tree Crossover GA Run: " << j << " | Best Fitness: " << GA->bestFitness << " | Generations: " << GA->generations << " | Time: " << end - start << endl;
 			// generations_file << endl;
 
 			delete GA;
 			GA = new adList(original, max_popSize / 4);
 			GA->op = AL_CROSSOVER;
 		}
-		cout << "Finished " << i << " Mutation GA Run | Best Fitness: " << overallBestFitness << " | Avg End Fitness: " << (float)totalBestFitness / runs << " | Avg Generations: " << (float)totalGenerations / runs << " | Time: " << time(NULL) - runStart << endl;
+		cout << "Finished " << i << " Tree Crossover GA Run | Best Fitness: " << overallBestFitness << " | Avg End Fitness: " << (float)totalBestFitness / runs << " | Avg Generations: " << (float)totalGenerations / runs << " | Time: " << time(NULL) - runStart << endl;
 		out_file << endl;
 		delete GA;
 
 		//output best tree to file
-		trees << endl << "Best tree vertices " << i << " mutation: " << endl;
+		trees << endl << "Best tree vertices (" << i << " Tree Crossover): " << endl;
 		best_tree->print(trees);
 		trees << endl;
 		delete best_tree;
@@ -156,7 +156,7 @@ int main()
 		int overallBestFitness = GA->bestFitness;
 		int runStart = time(NULL);
 
-		out_file << i << " Mutation GA Run, Best Fitness, Generations, Time" << endl;
+		out_file << i << " Tree Mix GA Run, Best Fitness, Generations, Time" << endl;
 
 		// run the GA run amount of times
 		for (int j = 0; j < runs; j++)
@@ -177,19 +177,19 @@ int main()
 			}
 
 			out_file << j << ", " << GA->bestFitness << ", " << GA->generations << ", " << end - start << endl;
-			cout << i << " Mutation GA Run: " << j << " | Best Fitness: " << GA->bestFitness << " | Generations: " << GA->generations << " | Time: " << end - start << endl;
+			cout << i << " Tree Mix GA Run: " << j << " | Best Fitness: " << GA->bestFitness << " | Generations: " << GA->generations << " | Time: " << end - start << endl;
 			// generations_file << endl;
 
 			delete GA;
 			GA = new adList(original, max_popSize / 4);
 			GA->mix = true;
 		}
-		cout << "Finished " << i << " Mutation GA Run | Best Fitness: " << overallBestFitness << " | Avg End Fitness: " << (float)totalBestFitness / runs << " | Avg Generations: " << (float)totalGenerations / runs << " | Time: " << time(NULL) - runStart << endl;
+		cout << "Finished " << i << " Tree Mix GA Run | Best Fitness: " << overallBestFitness << " | Avg End Fitness: " << (float)totalBestFitness / runs << " | Avg Generations: " << (float)totalGenerations / runs << " | Time: " << time(NULL) - runStart << endl;
 		out_file << endl;
 		delete GA;
 
 		//output best tree to file
-		trees << endl << "Best tree vertices " << i << " mutation: " << endl;
+		trees << endl << "Best tree vertices (" << i << " Tree Mix): " << endl;
 		best_tree->print(trees);
 		trees << endl;
 		delete best_tree;
