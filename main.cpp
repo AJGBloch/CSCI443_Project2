@@ -59,7 +59,7 @@ int main()
 			start = time(NULL);
 			// generations_file << "Generation, Total Fitness, Best Fitness, Avg, Staleness" << endl;
 
-			while (GA->staleness < max_staleness / 2)
+			while (GA->staleness < max_staleness)
 				GA->run_generation(generations_file);
 			end = time(NULL);
 			totalGenerations += GA->generations;
@@ -112,7 +112,7 @@ int main()
 			start = time(NULL);
 			// generations_file << "Generation, Total Fitness, Best Fitness, Avg, Staleness" << endl;
 
-			while (GA->staleness < max_staleness / 2)
+			while (GA->staleness < max_staleness)
 				GA->run_generation(generations_file);
 			end = time(NULL);
 			totalGenerations += GA->generations;
@@ -165,7 +165,7 @@ int main()
 			start = time(NULL);
 			// generations_file << "Generation, Total Fitness, Best Fitness, Avg, Staleness" << endl;
 
-			while (GA->staleness < max_staleness / 2)
+			while (GA->staleness < max_staleness)
 				GA->run_generation(generations_file);
 			end = time(NULL);
 			totalGenerations += GA->generations;
