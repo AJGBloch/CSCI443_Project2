@@ -11,14 +11,14 @@ using namespace std;
 
 int main()
 {
-	ofstream out_file, trees, generations_file;
+	ofstream out_file, trees, generations_file, analysis;
 	out_file.open("results.csv");
 	trees.open("trees.txt");
 	generations_file.open("generations.csv");
+	analysis.open("analysis.csv");
 	int exit_value;
 	int start, end;
 	Prufer *p;
-
 
 	// This is all you need to seed based on time
 	// Will now output seed to screen and file for troubleshooting
@@ -86,6 +86,7 @@ int main()
 		trees << endl << "Best tree vertices (" << i << " Tree Mutation): " << endl;
 		best_tree->print(trees);
 		trees << endl;
+		analysis << best_tree->fitness() << ",";
 		delete best_tree;
 	}
 	
@@ -139,6 +140,7 @@ int main()
 		trees << endl << "Best tree vertices (" << i << " Tree Crossover): " << endl;
 		best_tree->print(trees);
 		trees << endl;
+		analysis << best_tree->fitness() << ",";
 		delete best_tree;
 	}
 	
@@ -192,6 +194,7 @@ int main()
 		trees << endl << "Best tree vertices (" << i << " Tree Mix): " << endl;
 		best_tree->print(trees);
 		trees << endl;
+		analysis << best_tree->fitness() << ",";
 		delete best_tree;
 	}
 
@@ -319,6 +322,7 @@ int main()
 		}
 		overall_best_prufer->print(trees);
 		trees << endl;
+		analysis << overall_best_prufer->fitness << ",";
 		delete overall_best_prufer;
 		delete X;
 	}
@@ -435,6 +439,7 @@ int main()
 		}
 		overall_best_prufer->print(trees);
 		trees << endl;
+		analysis << overall_best_prufer->fitness << ",";
 		delete overall_best_prufer;
 		delete X;
 	}
@@ -483,6 +488,7 @@ int main()
 	trees << endl << "Best tree vertices (greedy):\n";
 	g_overall_best_tree->print(trees);
 	trees << endl;
+	analysis << g_overall_best_tree->fitness() << ",";
 
 	// cleanup
 	delete original;
@@ -493,6 +499,7 @@ int main()
 	out_file.close();
 	trees.close();
 	generations_file.close();
+	analysis.close();
 
 
 	//the following lines are needed to keep the terminal open until you want the program to end when running from visual studio
